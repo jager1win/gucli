@@ -14,7 +14,10 @@
     "core:tray:allow-set-title",
     "core:tray:allow-new",
     "core:window:allow-create",
-    "core:window:allow-close"
+    "core:window:allow-close",
+    "autostart:allow-enable",
+    "autostart:allow-disable",
+    "autostart:allow-is-enabled"
   ],
   "scope": {
     "allow": [

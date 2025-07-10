@@ -19,7 +19,7 @@
   -webkit-text-size-adjust: 100%;
 }
 
-.container {margin: 0 1rem;display: block;overflow-y: auto;}
+.container {margin: 0 1rem;display: block;overflow-y: auto;min-height: 100%; }
 .container > *,.bb{margin:0.6rem 0}
 
 .main_settingss.gridd{display: grid;grid-template-columns: 1fr 3fr;}
@@ -46,6 +46,8 @@ code,pre {background-color: var(--gr);padding: 1rem;border-radius: 3px;font-fami
 .row {display: flex;justify-content:space-between;margin:0.4rem;}
 .row.head,.status{font-weight: bold;}
 input::placeholder {color: var(--warn);opacity: 0.5;}
+.about{margin:2rem 0 0}
+a{color:var(--act)}
 .stt{
   font-weight: 600;
   text-decoration: underline;

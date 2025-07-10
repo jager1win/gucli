@@ -1,9 +1,9 @@
 [package]
 name = "gucli"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
-edition = "2021"
+description = "linux tray app for run cli commands"
+authors = ["Yuriy Jager Lysov"]
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -22,8 +22,10 @@ tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-toml = "0.8"
+toml = "0.9.0"
 notify-rust = "4.11.7"
 gtk = "0.18.2"
 log = "0.4.27"
-
+tauri-plugin-single-instance = "2.0.0"
+dirs = "6.0"
+tauri-plugin-autostart = "2.0"

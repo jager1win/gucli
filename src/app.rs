@@ -54,6 +54,7 @@ pub fn App() -> impl IntoView {
     let (status, set_status) = signal(String::from("Ok( Loading configuration )"));
     let (ttime, set_ttime) = signal(String::from(""));
     let (highlight, set_highlight) = signal(false);
+    let (is_autostart, set_autostart) = signal(false);
     //+ init commands on open window
     let load = move || {spawn_local(async move {
         let js_value = invoke_without_args("get_commands").await;
@@ -101,15 +102,16 @@ pub fn App() -> impl IntoView {
     let reset_commands = move || {
         spawn_local(async move {
             let js = invoke_without_args("reset_commands").await;
-            let _result: Result<String, String> =
-                from_value(js).map_err(|e| format!("deserialize failed: {e}"));
-            set_status.set("Ok( Settings reset to default )".to_string());
+            let result: Result<String, String> = from_value(js).map_err(|e| format!("deserialize failed: {e}"));
+            match result {
+                Ok(_) => { 
+                    set_status.set("Ok( Settings reset to default )".to_string());
+                    let _ = invoke("request_restart", JsValue::NULL).await;
+                }
+                Err(e) => set_status.set(format!("Err( Reset failed: {e}")),
+            }
         });
-        load();
     };
-
-    // add to autostart
-    let add_autostart = move || {};
 
     //+ Add a new row with default values
     let add_command = move || {
@@ -148,6 +150,43 @@ pub fn App() -> impl IntoView {
         });
     };
 
+    // autostart check
+    let check_autostart = move || {
+        spawn_local(async move {
+            let js = invoke_without_args("is_autostart_enabled").await;
+            if let Ok(enabled) = from_value::<bool>(js) {
+                set_autostart.set(enabled);
+            }
+        });
+    };
+    check_autostart();
+
+    let toggle_autostart = move || {
+        spawn_local(async move {
+            // Проверяем текущий статус
+            let status_js = invoke_without_args("is_autostart_enabled").await;
+            let current_status = from_value::<Result<String, String>>(status_js)
+                .unwrap_or(Err("Err( Autostart status unknown )".to_string()));
+
+            // Определяем действие
+            let action = match current_status {
+                Ok(msg) if msg.contains("enabled") => "disable_autostart",
+                _ => "enable_autostart",
+            };
+
+            // Выполняем действие
+            let result_js = invoke_without_args(action).await;
+            let result = from_value::<Result<String, String>>(result_js)
+                .unwrap_or(Err("Err( Autostart action failed )".to_string()));
+
+            // Обновляем статус
+            match result {
+                Ok(msg) => set_status.set(format!("Ok( Autostart status: {msg} )")),
+                Err(e) => set_status.set(format!("Err( {e} )")),
+            }
+        });
+    };
+
     Effect::new(move |_| {
         status.track(); // Tracking status changes
         set_ttime.set(Local::now().format("%Y-%m-%d %H:%M:%S.%3f").to_string()); // set new time
@@ -158,8 +197,13 @@ pub fn App() -> impl IntoView {
     view! {
         <main class="container">
             <div class="main_settings gridd topline buttons">
-                <button class="ok-bg" on:click=move |_| add_autostart()>"Add to autostart?"</button>
-                <button on:click=move |_| reset_commands() class="err-bg">"Reset to default"</button>
+                <button
+                    on:click=move |_| toggle_autostart()
+                    class=move || if is_autostart.get() { "ok-bg" } else { "" }
+                >
+                    {move || if is_autostart.get() { "Autostart: ON" } else { "Autostart: OFF" }}
+                </button>
+                <button on:click=move |_| reset_commands() class="err-bg">"Reset & Restart"</button>
             </div>
 
             <div class="status">
@@ -239,7 +283,7 @@ pub fn App() -> impl IntoView {
 
             <p class="tc">"GUCLI Warning: Not a CLI replacement!"<br />
               "Always test commands in terminal first, only add to GUCLI when 110% certain."<br />
-              "Your future self will either thank you or curse you ☠️"
+              "Your future self will either thank you or curse you 😈"
             </p>
 
             /*<details class="help">

@@ -4,10 +4,11 @@ use std::io::Write;
 use std::path::Path;
 use crate::CommandsConfig;
 use crate::SETTINGS_FILE;
+use dirs::home_dir;
 
 /// set settings.toml in user home folder
 pub fn full_path_settings() -> std::path::PathBuf {
-    let home = std::env::home_dir().unwrap();
+    let home = home_dir().expect("Could not find home directory");
     home.join(SETTINGS_FILE)
 }
 
@@ -28,6 +29,10 @@ pub fn set_config(reset: Option<bool>) -> std::io::Result<String> {
         writeln!(file, "# params: command=string(with args), active=bool(default true), system_notification=bool(default=true)")?;
         writeln!(file, "[[command]]")?;
         writeln!(file, "name = \"hostname -A\"")?;
+        writeln!(file, "active = true")?;
+        writeln!(file, "system_notification = true")?;
+        writeln!(file, "[[command]]")?;
+        writeln!(file, "name = \"zsh -c 'for i in {{1..3}}; do echo $i; done'\"")?;
         writeln!(file, "active = true")?;
         writeln!(file, "system_notification = true")?;
 
