@@ -8,21 +8,30 @@
   --err: oklch(67.7% 0.245 27.325);
   --act:oklch(67.3% 0.182 276.935);
   --gr:oklch(70.7% 0.022 261.325);
-
+  height: 100%;
+  display: block;
+  border-radius: 4px;border:2px solid var(--gr);
+  padding: 0;margin:0;
   color: var(--main-color);
   background-color: oklch(87.2% 0.01 258.338);
-
+  box-sizing: border-box;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
+  overflow-y: hidden;
 }
-
-.container {margin: 0 1rem;display: block;overflow-y: auto;min-height: 100%; }
-.container > *,.bb{margin:0.6rem 0}
+:root > *:first-child {
+  margin-top: 0 !important;padding-top: 0 !important;
+}
+body{display:block;margin:0;height: 100%;overflow: hidden;}
+.container {margin: 0;padding:0;display: block;overflow-x: hidden;height: 100%; }
+.container > *,.bb{margin: 0 1rem 4px;}
 
 .main_settingss.gridd{display: grid;grid-template-columns: 1fr 3fr;}
+.commands.form{overflow-y: auto;}
 .commands.form > div{display: grid;grid-template-columns: 4fr 1fr 1fr 1fr 1fr; text-align: center;align-items: center;justify-content: center;}
 .commands.form div.chb{display:flex;justify-items: center;justify-content: center;}
 .topline{display:inline-flex; width: 100%;align-items: baseline; justify-content: space-evenly;}
@@ -56,18 +65,9 @@ a{color:var(--act)}
   text-underline-offset: 3px;
   color: inherit;
 }
-.status-block {
-    transition: opacity 0.3s ease;
-}
-
-/* Анимация при изменении */
-.status-block[data-update] {
-    animation: fadeHighlight 1s;
-}
-
-.status-block.highlight {
-    animation: status-highlight 1.2s ease;
-}
+.status-block {transition: opacity 0.3s ease;}
+.status-block[data-update] {animation: fadeHighlight 1s;}
+.status-block.highlight {animation: status-highlight 1.2s ease;}
 
 @keyframes status-highlight {
     0% { opacity: 0.3; }
@@ -93,6 +93,29 @@ button:hover {border-color: #396cd8;}
 button:active {border-color: #396cd8;background-color: #e8e8e8;}
 
 input,button { outline: none;}
+
+.titlebar {
+    margin: 0 1rem 4px;
+    height: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.2rem 0.4rem;
+    user-select: none;
+    border-bottom: 1px solid darkgrey;
+    -webkit-user-select: none;
+}
+.titlebar-controls{display: inline-flex;}
+.titlebar-controls button {
+    background: none;
+    width: 2rem;
+    height: 2rem;
+    font-size: 1rem;
+    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.titlebar-controls button:hover {border: 1px solid var(--act);}
+[data-tauri-drag-region] {cursor: move;}
 
 @media (prefers-color-scheme: dark) {
   :root {

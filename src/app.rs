@@ -38,6 +38,11 @@ struct SaveBackArgs {
     commands: Vec<Command>,
 }
 
+#[derive(Serialize)]
+struct CtrlWindow<'a> {
+    action: &'a str,
+}
+
 #[wasm_bindgen]
 extern "C" {
     // invoke without arguments
@@ -55,6 +60,7 @@ pub fn App() -> impl IntoView {
     let (ttime, set_ttime) = signal(String::from(""));
     let (highlight, set_highlight) = signal(false);
     let (is_autostart, set_autostart) = signal(false);
+    let (is_maximized, set_is_maximized) = signal("max0");
     //+ init commands on open window
     let load = move || {spawn_local(async move {
         let js_value = invoke_without_args("get_commands").await;
@@ -161,6 +167,17 @@ pub fn App() -> impl IntoView {
     };
     check_autostart();
 
+    let ctrl_window = move |ctrl| {
+        if ctrl == "max0"{
+            set_is_maximized.set("max1");
+        }else {set_is_maximized.set("max0");}
+
+        spawn_local(async move {
+            let args = to_value(&CtrlWindow { action: ctrl }).unwrap();
+            let _ = invoke("ctrl_window",args).await;
+        });
+    };
+
     let toggle_autostart = move || {
         spawn_local(async move {
             // Проверяем текущий статус
@@ -177,7 +194,7 @@ pub fn App() -> impl IntoView {
             // Выполняем действие
             let result_js = invoke_without_args(action).await;
             let result = from_value::<Result<String, String>>(result_js)
-                .unwrap_or(Err("Err( Autostart action failed )".to_string()));
+                .unwrap_or(Err("Autostart action failed".to_string()));
 
             // Обновляем статус
             match result {
@@ -195,7 +212,17 @@ pub fn App() -> impl IntoView {
     });
 
     view! {
+
         <main class="container">
+            <div data-tauri-drag-region class="titlebar">
+                <div class="titlebar-title">"$_ Gucli Settings"</div>
+                <div class="titlebar-controls">
+                    <button on:click=move |_| ctrl_window("min") id="titlebar-minimize">"─"</button>
+                    <button on:click=move |_| ctrl_window(is_maximized.get()) id="titlebar-maximize">{move || if is_maximized.get() == "max1"{ "❐" } else { "□" }}</button>
+                    <button on:click=move |_| ctrl_window("close") id="titlebar-close">"x"</button>
+                </div>
+            </div>
+
             <div class="main_settings gridd topline buttons">
                 <button
                     on:click=move |_| toggle_autostart()
@@ -286,41 +313,6 @@ pub fn App() -> impl IntoView {
               "Your future self will either thank you or curse you 😈"
             </p>
 
-            /*<details class="help">
-                <summary><span>"Help"</span></summary>
-                <div>
-                    <ul>
-                        <li><b class="stt">"Файл настроек"</b>" программы находится в /home/$USER/.config/gucli/settings.toml"<br />
-                        "По умолчанию - при установке и после сброса кнопкой `Reset` - выглядит так:"<br />
-                            <pre>"# params: command=string(with args), active=bool(default true), system_notification=bool(default=true)"<br />
-                            "[[command]]"<br />
-                            "name = \"hostname -A\""<br />
-                            "active = true"<br />
-                            "system_notification = true"</pre>
-                            "В первой строке комментария указана структура, соответствуя которой нужно добавлять команды"
-                        </li>
-                        <li><b class="stt">"Редактировать настройки"</b>" можно как в интерфейсе, так и в текстовом редакторе."<br />
-                            "После редактирования в текстовом редакторе программу нужно перезапустить."<br />
-                            "Можно добавить команду <xdg-open /home/$USER/.config/gucli/settings.toml>"<br />
-                            "<xdg-open> конечно можно заменить на ваш предпочтительный текстовый редактор"
-                        </li>
-                        <li><b class="stt">"SN (system notification)"</b>" даже при выключенном состоянии будут выводить сообщения в случае ошибки"</li>
-                        <li>"Идентификатором команды в меню трея является сама строка команды - для четкого осознанного выбора, исключающего ошибки."</li>
-                        <li><b class="stt">"Используйте ` &`"</b>" для сложных команд, добавляя в конце строки амперсанд"<br />
-                            "В меню трея, в зависимости от системы, он может отображаться как `_`"<br />
-                        </li>
-                        <li>
-                            <strong>"Linux Command Types:"</strong>
-                            <ul>
-                                <li><b class="stt">"Regular"</b>" (e.g., "<b class="stt">"ls -la"</b>"): Output can shown in notification."</li>
-                                <li><b class="stt">"Long-running"</b>" (e.g., "<b class="stt">"watch"</b>"): Add "<b class="stt">"&"</b>" to run in background ("<b class="stt">"watch -n 1 "date" &"</b>")."</li>
-                                <li><b class="stt">"No-output"</b>" (e.g., "<b class="stt">"sleep"</b>"): Can disable notifications in settings."</li>
-                            </ul>
-                        </li>
-                    </ul>
-                </div>
-            </details>*/
-
             <details class="help">
                 <summary><span>"Help"</span></summary>
                 <div>
@@ -331,7 +323,11 @@ pub fn App() -> impl IntoView {
                                 "[[command]]"<br />
                                 "name = \"hostname -A\""<br />
                                 "active = true"<br />
-                                "system_notification = true"
+                                "system_notification = true"<br />
+                                "[[command]]"<br />
+                                "name = \"zsh -c 'for i in {1..3}; do echo $i; done'\""<br />
+                                "active = true"<br />
+                                "system_notification = true"<br />
                             </pre>
                             "The first line describes the structure - add commands accordingly"
                         </li>

@@ -1,10 +1,8 @@
 use serde::{Deserialize, Serialize};
 use tauri::{
-    menu::{MenuItem, MenuBuilder},
-    tray::TrayIconBuilder,
-    Manager, Runtime,
+    menu::{MenuBuilder, MenuItem}, tray::TrayIconBuilder, Manager, Runtime
 };
-use notify_rust::{Notification, Timeout};
+use tauri_plugin_notification::{NotificationExt};
 use std::process::Command as stdcom;
 mod files;
 use crate::files::*;
@@ -24,6 +22,21 @@ pub struct CommandsConfig {
 }
 
 pub const SETTINGS_FILE: &str = ".config/gucli/settings.toml";
+pub const LOG_FILE: &str = ".config/gucli/gucli.log";
+
+#[tauri::command]
+async fn ctrl_window(action:&str, app: tauri::AppHandle)->Result<(), Error> {
+    println!("{action}");
+    let window = app.get_webview_window("settings").unwrap();
+    let _ = match action {
+        "min" => window.minimize(),
+        "max0" => window.maximize(),
+        "max1" => window.unmaximize(),
+        "close" => window.close(),
+        &_ => Ok(())
+    };
+    Ok(())
+}
 
 #[tauri::command]
 async fn get_commands() -> Result<Vec<Command>, String> {
@@ -50,10 +63,10 @@ async fn request_restart(app: tauri::AppHandle) {
 }
 
 #[tauri::command]
-async fn run_test(cmd: Command) -> String {
-    match run_command(&cmd) {
+async fn run_test(cmd: Command, app: tauri::AppHandle) -> String {
+    match run_command(&cmd, &app) {
         Ok(success) => success,
-        Err(error) => error
+        Err(error) => error,
     }
 }
 
@@ -86,32 +99,18 @@ async fn is_autostart_enabled(app: tauri::AppHandle) -> Result<String, String> {
         })
         .map_err(|e| format!("Failed to check autostart status: {e}"))
 }
-
+// set_log("gucli".to_string(),"File gucli.log created".to_string());
 pub fn run() {
     if let Err(e) = set_config(None) {
         log::error!("Failed to init config: {e}");
     }
 
     tauri::Builder::default()
-        .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
-            // Фокусируем окно при попытке запуска второй копии
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.set_focus();
-            }
-        }))
         .setup(|app| {
-            let window = app.get_webview_window("main").unwrap();
-            let window_clone = window.clone();
-            window.on_window_event(move |event| {
-                if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                    api.prevent_close();
-                    window_clone.hide().unwrap();
-                }
-            });
-
             let commands_config = load_commands().unwrap();
             
-            let settings = MenuItem::with_id(app, "main", "Settings", true, None::<&str>)?;
+            // tray menu
+            let settings = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
             let restart = MenuItem::with_id(app, "restart", "Restart", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
 
@@ -145,13 +144,13 @@ pub fn run() {
                 .menu(&menu)
                 .on_menu_event(move |app, event| {
                     match event.id.as_ref() {
-                        "main" => toggle_window(app),
+                        "settings" => open_settings(app),
                         "restart" => app.restart(),
                         "quit" => app.exit(0),
                         id if id.starts_with("cmd_") => {
                             let cmd_name = id.replace("cmd_", "");
                             if let Some(cmd) = commands_config.commands.iter().find(|c| c.name == cmd_name) {
-                                let _ = run_command(cmd);
+                                let _ = run_command(cmd, app);
                             }
                         }
                         _ => {}
@@ -162,7 +161,16 @@ pub fn run() {
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_autostart::Builder::new().build())
+        .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.set_focus();
+            }
+            if let Some(window) = app.get_webview_window("settings") {
+                let _ = window.set_focus();
+            }
+        }))
         .invoke_handler(tauri::generate_handler![
             get_commands,
             set_commands,
@@ -171,46 +179,73 @@ pub fn run() {
             request_restart,
             enable_autostart,
             disable_autostart,
-            is_autostart_enabled
+            is_autostart_enabled,
+            ctrl_window
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
 
-fn toggle_window<R: Runtime>(app: &tauri::AppHandle<R>) {
-    if let Some(window) = app.get_webview_window("main") {
-        if window.is_visible().unwrap_or(false) {
-            window.hide().unwrap();
-        } else {
-            window.show().unwrap();
-            window.set_focus().unwrap();
-        }
+fn open_settings<R: Runtime>(app: &tauri::AppHandle<R>) {
+    // Закрываем окно, если оно открыто
+    if let Some(window) = app.get_webview_window("settings") {
+        window.close().unwrap();
+    }else{
+        // Создаём новое окно
+        let _window = tauri::WebviewWindowBuilder::new(
+            app,
+            "settings",
+            tauri::WebviewUrl::App("/".into())
+        )
+        .title("Settings")
+        .inner_size(800.0, 600.0)
+        .decorations(false)
+        .visible(true)
+        .build()
+        .unwrap();
+        
+        _window.set_focus().unwrap();
     }
 }
 
-fn run_command(cmd: &Command) -> Result<String, String> {
+fn run_command(cmd: &Command, app: &tauri::AppHandle) -> Result<String, String> {
     log::debug!("Executing command: {}", &cmd.name);
     let result = execute_command(&cmd.name);
-    
-    let (is_success, message) = match result {
-        Ok(output) => (true, format!("Ok( Command <{}> executed )\nResult: {}", &cmd.name, &output)),
-        Err(err) => (false, format!("Err( executing command <{}> )\nError: {}", &cmd.name, &err)),
+
+    let (is_success, message) = match &result {
+        Ok(output) => (
+            true,
+            format!("Ok( Command <{}> executed )\nResult: {}", &cmd.name, &output),
+        ),
+        Err(err) => (
+            false,
+            format!("Err( executing command <{}> )\nError: {}", &cmd.name, &err),
+        ),
     };
+
+    //set_log(cmd.name.clone(), result.unwrap().replace("\n", " "));
+    match result {
+        Ok(value) => set_log(cmd.name.clone(), value.replace("\n", " ")),
+        Err(err) => set_log(cmd.name.clone(), err)
+    }
 
     if !is_success || cmd.system_notification {
         let (summary, body) = message.split_at(message.find('\n').unwrap_or(message.len()));
-        if let Err(e) = Notification::new()
-            .summary(summary)
-            .body(body.trim_start_matches('\n'))
-            .icon("system")
-            .timeout(Timeout::Milliseconds(200))
-            .show()
-        {
-            log::error!("Failed to show notification: {e}");
-        }
+        //send_notification(app, summary, body.trim_start_matches('\n'));
+        app.notification()
+        .builder()
+        .title(summary)
+        .body(body.trim_start_matches('\n'))
+        .icon("system") 
+        .show()
+        .unwrap();
     }
 
-    if is_success { Ok(message) } else { Err(message) }
+    if is_success {
+        Ok(message)
+    } else {
+        Err(message)
+    }
 }
 
 fn execute_command(command: &str) -> Result<String, String> {

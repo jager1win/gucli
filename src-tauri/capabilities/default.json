@@ -8,16 +8,15 @@
   ],
   "permissions": [
     "core:default",
-    "opener:default",
+    "core:menu:default",
     "core:tray:default",
-    "core:tray:allow-set-menu",
-    "core:tray:allow-set-title",
-    "core:tray:allow-new",
-    "core:window:allow-create",
+    "core:window:default",
+    "core:window:allow-start-dragging",
     "core:window:allow-close",
-    "autostart:allow-enable",
-    "autostart:allow-disable",
-    "autostart:allow-is-enabled"
+    "core:window:allow-minimize",
+    "autostart:default",
+    "notification:default",
+    "opener:default"
   ],
   "scope": {
     "allow": [

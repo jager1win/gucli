@@ -14,11 +14,7 @@
     "windows": [
         {
             "label": "main",
-            "title": "Gucli Settings",
-            "visible": false,
-            "theme":"Dark",
-            "width": 800,
-            "height": 600
+            "visible": false
         }
     ],
     "security": {
@@ -28,6 +24,10 @@
   "bundle": {
     "active": true,
     "targets": ["deb","rpm","appimage"],
+    "category": "Utility",
+    "licenseFile": "../LICENSE",
+    "license": "GPLv3",
+    "shortDescription": "GUI tray interface for cli commands",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -36,13 +36,14 @@
       "icons/icon.ico"
     ],
     "linux": {
-        "appimage": {
+      "appimage": {
         "bundleMediaFramework": false,
         "files": {}
       },
       "deb": {
         "files": {}
-      },"rpm": {
+      },
+      "rpm": {
         "epoch": 0,
         "files": {},
         "release": "0.1.0"
