@@ -1,16 +1,190 @@
-use crate::CommandsConfig;
+use chrono::Local;
+use dirs::home_dir;
+use std::fs;
+use std::io::{self, Write};
+use std::path::{PathBuf};
+use tracing_subscriber::fmt::writer::MakeWriter;
+
+pub const COMMANDS_FILE: &str = ".config/gucli/commands.toml";
+pub const LOG_FILE: &str = ".config/gucli/gucli.log";
+
+pub struct LineLimitedWriter {
+    path: PathBuf,
+    max_lines: usize,
+}
+
+impl LineLimitedWriter {
+    pub fn new(path: PathBuf, max_lines: usize) -> Self {
+        Self { path, max_lines }
+    }
+}
+
+impl<'a> MakeWriter<'a> for LineLimitedWriter {
+    type Writer = LineLimitedFile;
+
+    fn make_writer(&'a self) -> Self::Writer {
+        LineLimitedFile {
+            path: self.path.clone(),
+            max_lines: self.max_lines,
+        }
+    }
+}
+
+pub struct LineLimitedFile {
+    path: PathBuf,
+    max_lines: usize,
+}
+
+impl Write for LineLimitedFile {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        let message = String::from_utf8_lossy(buf)
+            .trim()
+            .to_string();
+        
+        // Читаем текущее содержимое файла
+        let mut content = if self.path.exists() {
+            fs::read_to_string(&self.path)?
+        } else {
+            String::new()
+        };
+
+        // Добавляем новую запись с переносом строки
+        if !content.is_empty() {
+            content.push('\n');
+        }
+        content.push_str(&message);
+
+        // Обрезаем до max_lines
+        let lines: Vec<&str> = content.lines().collect();
+        let truncated = if lines.len() > self.max_lines {
+            lines[lines.len() - self.max_lines..].join("\n")
+        } else {
+            content
+        };
+
+        fs::write(&self.path, truncated)?;
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        Ok(())
+    }
+}
+/// Полный путь к файлу команд
+pub fn full_path_commands() -> PathBuf {
+    home_dir().expect("Home directory not found").join(COMMANDS_FILE)
+}
+
+/// Полный путь к лог-файлу
+pub fn full_path_log() -> PathBuf {
+    home_dir().expect("Home directory not found").join(LOG_FILE)
+}
+
+/// Инициализация конфига (без изменений)
+pub fn set_config(reset: Option<bool>) -> io::Result<String> {
+    let reset = reset.unwrap_or(false);
+    let commands_path = full_path_commands();
+
+    if !commands_path.exists() || reset {
+        fs::create_dir_all(commands_path.parent().unwrap())?;
+        
+        let default_config = r#"
+            # params: command=string(with args), active=bool(default true), system_notification=bool(default=true)
+            [[command]]
+            name = "hostname -A"
+            active = true
+            system_notification = true
+        "#;
+
+        fs::write(&commands_path, default_config.trim())?;
+        Ok("File created".to_string())
+    } else {
+        Ok("File exists".to_string())
+    }
+}
+
+/// Загрузка команд (без изменений)
+pub fn load_commands() -> Result<crate::CommandsConfig, Box<dyn std::error::Error>> {
+    let content = fs::read_to_string(full_path_commands())?;
+    Ok(toml::from_str(&content)?)
+}
+
+/// Сохранение команд (без изменений)
+pub fn save_commands(config: &crate::CommandsConfig) -> Result<(), Box<dyn std::error::Error>> {
+    fs::write(full_path_commands(), toml::to_string(config)?)?;
+    Ok(())
+}
+
+
+/*use crate::CommandsConfig;
 use crate::LOG_FILE;
-use crate::SETTINGS_FILE;
+use crate::COMMANDS_FILE;
 use chrono::Local;
 use dirs::home_dir;
 use std::fs::{self, OpenOptions, File};
-use std::io::{BufRead, BufReader, Write};
+use std::io::{self, BufRead, BufReader, Write};
 use std::path::Path;
+use std::path::PathBuf;
+use tracing::{info,error};
+use tracing_subscriber::fmt::writer::MakeWriter;
 
-/// set settings.toml in user home folder
-pub fn full_path_settings() -> std::path::PathBuf {
+pub struct LineLimitedWriter {
+    path: PathBuf,
+    max_lines: usize,
+}
+
+impl LineLimitedWriter {
+    pub fn new(path: PathBuf, max_lines: usize) -> Self {
+        Self { path, max_lines }
+    }
+}
+
+impl<'a> MakeWriter<'a> for LineLimitedWriter {
+    type Writer = LineLimitedFile;
+
+    fn make_writer(&'a self) -> Self::Writer {
+        LineLimitedFile {
+            path: self.path.clone(),
+            max_lines: self.max_lines,
+        }
+    }
+}
+
+pub struct LineLimitedFile {
+    path: PathBuf,
+    max_lines: usize,
+}
+
+impl Write for LineLimitedFile {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S ");
+        let message = format!("{}{}", timestamp, String::from_utf8_lossy(buf));
+        
+        let content = if self.path.exists() {
+            fs::read_to_string(&self.path).unwrap_or_default()
+        } else {
+            String::new()
+        };
+        let mut lines = content.lines().collect::<Vec<_>>();
+        lines.push(&message);
+        
+        if lines.len() > self.max_lines {
+            lines.remove(0);
+        }
+        
+        fs::write(&self.path, lines.join("\n"))?;
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        Ok(())
+    }
+}
+
+/// set commands.toml in user home folder
+pub fn full_path_commands() -> std::path::PathBuf {
     let home = home_dir().expect("Could not find home directory");
-    home.join(SETTINGS_FILE)
+    home.join(COMMANDS_FILE)
 }
 
 /// set gucli.log in user home folder
@@ -19,19 +193,19 @@ pub fn full_path_log() -> std::path::PathBuf {
     home.join(LOG_FILE)
 }
 
-/// set settings.toml on install app, check on run & reset
+/// set commands.toml on install app, check on run & reset
 pub fn set_config(reset: Option<bool>) -> std::io::Result<String> {
     let reset = reset.unwrap_or(false);
-    let setting_path = full_path_settings();
+    let commands_path = full_path_commands();
 
-    if !setting_path.exists() || reset {
-        println!("File {:?} don`t exist or reset. make...", &setting_path);
+    if !commands_path.exists() || reset {
+        println!("File {:?} don`t exist or reset. make...", &commands_path);
 
-        let dir = Path::new(&setting_path)
+        let dir = Path::new(&commands_path)
             .parent()
             .expect("Failed to get parent directory");
         std::fs::create_dir_all(dir)?;
-        let mut file = File::create(setting_path)?;
+        let mut file = File::create(commands_path)?;
 
         writeln!(file,"# params: command=string(with args), active=bool(default true), system_notification=bool(default=true)")?;
         writeln!(file, "[[command]]")?;
@@ -42,56 +216,23 @@ pub fn set_config(reset: Option<bool>) -> std::io::Result<String> {
         Ok("File created".to_string())
     } else {
         if !Path::new(&full_path_log()).is_file() {
-            set_log("gucli".to_string(),"File gucli.log created".to_string());
+            info!("File gucli.log created");
         }
         Ok("File exist".to_string())
     }
 }
 
-/// read settings.toml
+/// read commands.toml
 pub fn load_commands() -> Result<CommandsConfig, Box<dyn std::error::Error>> {
-    let path = full_path_settings();
+    let path = full_path_commands();
     let content = fs::read_to_string(path)?;
     Ok(toml::from_str(&content)?)
 }
 
-/// write settings.toml
+/// write commands.toml
 pub fn save_commands(config: &CommandsConfig) -> Result<(), Box<dyn std::error::Error>> {
-    let path = full_path_settings();
+    let path = full_path_commands();
     let content = toml::to_string(config)?;
     fs::write(path, content)?;
     Ok(())
-}
-
-/// update gucli.log
-pub fn set_log(func:String, line: String){
-    let path = full_path_log();
-    
-    // Читаем существующие строки (если файл есть)
-    let lines = if let Ok(file) = fs::File::open(&path) {
-        BufReader::new(file).lines().map_while(Result::ok).collect()
-    } else {
-        Vec::new()
-    };
-
-    // fix max count strings
-    let mut lines = lines;
-    if lines.len() >= 100 {
-        lines.remove(0);
-    }
-    
-    // add string
-    lines.push(format!("{} ** {} ** {}", Local::now().format("%Y-%m-%d %H:%M:%S.%3f"), func, line));
-
-    // write
-    let _ = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .truncate(true)
-        .open(&path)
-        .map(|mut file| {
-            for l in lines {
-                let _ = writeln!(file, "{l}"); // ignore errors
-            }
-        });
-}
+}*/

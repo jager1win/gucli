@@ -4,9 +4,11 @@ use tauri::{
 };
 use tauri_plugin_notification::{NotificationExt};
 use std::process::Command as stdcom;
-mod files;
+use tracing::{error, info};
+pub mod files;
 use crate::files::*;
 use tauri_plugin_autostart::*;
+
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Command {
@@ -21,8 +23,8 @@ pub struct CommandsConfig {
     pub commands: Vec<Command>,
 }
 
-pub const SETTINGS_FILE: &str = ".config/gucli/settings.toml";
-pub const LOG_FILE: &str = ".config/gucli/gucli.log";
+//pub const COMMANDS_FILE: &str = ".config/gucli/commands.toml";
+//pub const LOG_FILE: &str = ".config/gucli/gucli.log";
 
 #[tauri::command]
 async fn ctrl_window(action:&str, app: tauri::AppHandle)->Result<(), Error> {
@@ -104,6 +106,9 @@ pub fn run() {
     if let Err(e) = set_config(None) {
         log::error!("Failed to init config: {e}");
     }
+
+    let notif = std::env::var("DBUS_SESSION_BUS_ADDRESS").is_ok();
+    if !notif {error!("Fail notification - DBUS_SESSION_BUS_ADDRESS return false");}
 
     tauri::Builder::default()
         .setup(|app| {
@@ -223,10 +228,9 @@ fn run_command(cmd: &Command, app: &tauri::AppHandle) -> Result<String, String> 
         ),
     };
 
-    //set_log(cmd.name.clone(), result.unwrap().replace("\n", " "));
     match result {
-        Ok(value) => set_log(cmd.name.clone(), value.replace("\n", " ")),
-        Err(err) => set_log(cmd.name.clone(), err)
+        Ok(value) => info!("{}", format!("{} {}", cmd.name.clone(), value.replace("\n", " "))),
+        Err(err) => error!("{}", format!("{} {}", cmd.name.clone(), err))
     }
 
     if !is_success || cmd.system_notification {
@@ -236,7 +240,6 @@ fn run_command(cmd: &Command, app: &tauri::AppHandle) -> Result<String, String> 
         .builder()
         .title(summary)
         .body(body.trim_start_matches('\n'))
-        .icon("system") 
         .show()
         .unwrap();
     }

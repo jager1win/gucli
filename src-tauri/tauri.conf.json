@@ -41,7 +41,8 @@
         "files": {}
       },
       "deb": {
-        "files": {}
+        "files": {},
+        "depends": ["libnotify-bin"]
       },
       "rpm": {
         "epoch": 0,
