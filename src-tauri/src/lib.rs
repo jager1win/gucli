@@ -101,7 +101,7 @@ async fn is_autostart_enabled(app: tauri::AppHandle) -> Result<String, String> {
         })
         .map_err(|e| format!("Failed to check autostart status: {e}"))
 }
-// set_log("gucli".to_string(),"File gucli.log created".to_string());
+
 pub fn run() {
     if let Err(e) = set_config(None) {
         log::error!("Failed to init config: {e}");
@@ -144,7 +144,7 @@ pub fn run() {
                 .item(&quit)
                 .build()?;
 
-            TrayIconBuilder::new()
+            TrayIconBuilder::with_id("main")
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
                 .on_menu_event(move |app, event| {
@@ -169,12 +169,13 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.set_focus();
+            if let Some(tray) = app.tray_by_id("main") {
+                tray.set_visible(true).ok();
             }
             if let Some(window) = app.get_webview_window("settings") {
                 let _ = window.set_focus();
             }
+            std::process::exit(0);
         }))
         .invoke_handler(tauri::generate_handler![
             get_commands,
