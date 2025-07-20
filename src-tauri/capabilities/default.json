@@ -15,7 +15,6 @@
     "core:window:allow-close",
     "core:window:allow-minimize",
     "autostart:default",
-    "notification:default",
     "opener:default"
   ],
   "scope": {

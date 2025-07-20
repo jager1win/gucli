@@ -46,8 +46,7 @@
       },
       "rpm": {
         "epoch": 0,
-        "files": {},
-        "release": "0.1.0"
+        "files": {}
       }
     }
   }

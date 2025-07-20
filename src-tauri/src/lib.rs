@@ -1,14 +1,14 @@
 use serde::{Deserialize, Serialize};
-use tauri::{
-    menu::{MenuBuilder, MenuItem}, tray::TrayIconBuilder, Manager, Runtime
-};
-use tauri_plugin_notification::{NotificationExt};
 use std::process::Command as stdcom;
-use tracing::{error, info};
+use tauri::{
+    Manager, Runtime,
+    menu::{MenuBuilder, MenuItem},
+    tray::TrayIconBuilder,
+};
+use tracing::{debug, error, info};
 pub mod files;
 use crate::files::*;
 use tauri_plugin_autostart::*;
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Command {
@@ -23,11 +23,8 @@ pub struct CommandsConfig {
     pub commands: Vec<Command>,
 }
 
-//pub const COMMANDS_FILE: &str = ".config/gucli/commands.toml";
-//pub const LOG_FILE: &str = ".config/gucli/gucli.log";
-
 #[tauri::command]
-async fn ctrl_window(action:&str, app: tauri::AppHandle)->Result<(), Error> {
+async fn ctrl_window(action: &str, app: tauri::AppHandle) -> Result<(), Error> {
     println!("{action}");
     let window = app.get_webview_window("settings").unwrap();
     let _ = match action {
@@ -35,7 +32,7 @@ async fn ctrl_window(action:&str, app: tauri::AppHandle)->Result<(), Error> {
         "max0" => window.maximize(),
         "max1" => window.unmaximize(),
         "close" => window.close(),
-        &_ => Ok(())
+        &_ => Ok(()),
     };
     Ok(())
 }
@@ -65,8 +62,8 @@ async fn request_restart(app: tauri::AppHandle) {
 }
 
 #[tauri::command]
-async fn run_test(cmd: Command, app: tauri::AppHandle) -> String {
-    match run_command(&cmd, &app) {
+async fn run_test(cmd: Command) -> String {
+    match run_command(&cmd) {
         Ok(success) => success,
         Err(error) => error,
     }
@@ -108,12 +105,14 @@ pub fn run() {
     }
 
     let notif = std::env::var("DBUS_SESSION_BUS_ADDRESS").is_ok();
-    if !notif {error!("Fail notification - DBUS_SESSION_BUS_ADDRESS return false");}
+    if !notif {
+        error!("Fail notification - DBUS_SESSION_BUS_ADDRESS return false");
+    }
 
     tauri::Builder::default()
         .setup(|app| {
             let commands_config = load_commands().unwrap();
-            
+
             // tray menu
             let settings = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
             let restart = MenuItem::with_id(app, "restart", "Restart", true, None::<&str>)?;
@@ -147,26 +146,25 @@ pub fn run() {
             TrayIconBuilder::with_id("main")
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
-                .on_menu_event(move |app, event| {
-                    match event.id.as_ref() {
-                        "settings" => open_settings(app),
-                        "restart" => app.restart(),
-                        "quit" => app.exit(0),
-                        id if id.starts_with("cmd_") => {
-                            let cmd_name = id.replace("cmd_", "");
-                            if let Some(cmd) = commands_config.commands.iter().find(|c| c.name == cmd_name) {
-                                let _ = run_command(cmd, app);
-                            }
+                .on_menu_event(move |app, event| match event.id.as_ref() {
+                    "settings" => open_settings(app),
+                    "restart" => app.restart(),
+                    "quit" => app.exit(0),
+                    id if id.starts_with("cmd_") => {
+                        let cmd_name = id.replace("cmd_", "");
+                        if let Some(cmd) =
+                            commands_config.commands.iter().find(|c| c.name == cmd_name)
+                        {
+                            let _ = run_command(cmd);
                         }
-                        _ => {}
                     }
+                    _ => {}
                 })
                 .build(app)?;
 
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
             if let Some(tray) = app.tray_by_id("main") {
@@ -196,32 +194,32 @@ fn open_settings<R: Runtime>(app: &tauri::AppHandle<R>) {
     // Закрываем окно, если оно открыто
     if let Some(window) = app.get_webview_window("settings") {
         window.close().unwrap();
-    }else{
+    } else {
         // Создаём новое окно
-        let _window = tauri::WebviewWindowBuilder::new(
-            app,
-            "settings",
-            tauri::WebviewUrl::App("/".into())
-        )
-        .title("Settings")
-        .inner_size(800.0, 600.0)
-        .decorations(false)
-        .visible(true)
-        .build()
-        .unwrap();
-        
+        let _window =
+            tauri::WebviewWindowBuilder::new(app, "settings", tauri::WebviewUrl::App("/".into()))
+                .title("Settings")
+                .inner_size(800.0, 600.0)
+                .decorations(false)
+                .visible(true)
+                .build()
+                .unwrap();
+
         _window.set_focus().unwrap();
     }
 }
 
-fn run_command(cmd: &Command, app: &tauri::AppHandle) -> Result<String, String> {
-    log::debug!("Executing command: {}", &cmd.name);
+fn run_command(cmd: &Command) -> Result<String, String> {
+    debug!("Executing command: {}", &cmd.name);
     let result = execute_command(&cmd.name);
 
     let (is_success, message) = match &result {
         Ok(output) => (
             true,
-            format!("Ok( Command <{}> executed )\nResult: {}", &cmd.name, &output),
+            format!(
+                "Ok( Command <{}> executed )\nResult: {}",
+                &cmd.name, &output
+            ),
         ),
         Err(err) => (
             false,
@@ -229,20 +227,21 @@ fn run_command(cmd: &Command, app: &tauri::AppHandle) -> Result<String, String> 
         ),
     };
 
+    // push to log
     match result {
-        Ok(value) => info!("{}", format!("{} {}", cmd.name.clone(), value.replace("\n", " "))),
-        Err(err) => error!("{}", format!("{} {}", cmd.name.clone(), err))
+        Ok(val) => info!("Command <{}> Result: {}", cmd.name.clone(), val.replace("\n", " ")),
+        Err(err) => error!("Command <{}> Error: {}", cmd.name.clone(), err),
     }
 
     if !is_success || cmd.system_notification {
         let (summary, body) = message.split_at(message.find('\n').unwrap_or(message.len()));
-        //send_notification(app, summary, body.trim_start_matches('\n'));
-        app.notification()
-        .builder()
-        .title(summary)
-        .body(body.trim_start_matches('\n'))
-        .show()
-        .unwrap();
+        send_notification(summary, body);
+        let _ = stdcom::new("notify-send")
+            .arg(summary)
+            .arg(body)
+            .arg("--app-name=gucli")
+            .arg("--icon=system")
+            .status();
     }
 
     if is_success {
@@ -263,5 +262,18 @@ fn execute_command(command: &str) -> Result<String, String> {
         String::from_utf8(output.stdout).map_err(|e| e.to_string())
     } else {
         Err(String::from_utf8(output.stderr).unwrap_or_else(|_| "Unknown error".to_string()))
+    }
+}
+
+fn send_notification(summary: &str, body: &str) {
+    if stdcom::new("notify-send").arg("--version").output().is_ok() {
+        let _ = stdcom::new("notify-send")
+            .arg(summary)
+            .arg(body)
+            .arg("--app-name=gucli")
+            .arg("--icon=system")
+            .status();
+    } else {
+        error!("notify-send not found. Notification skipped: {} - {}", summary, body);
     }
 }
