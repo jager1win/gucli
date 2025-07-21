@@ -1,4 +1,3 @@
-use dirs::home_dir;
 use std::fs;
 use std::io::{self, Write};
 use std::path::PathBuf;
@@ -67,16 +66,14 @@ impl Write for LineLimitedFile {
         Ok(())
     }
 }
-/// return path COMMANDS_FILE
+/// return full path COMMANDS_FILE
 pub fn full_path_commands() -> PathBuf {
-    home_dir()
-        .expect("Home directory not found")
-        .join(COMMANDS_FILE)
+    get_home_dir().expect("Home dir not found").join(COMMANDS_FILE)
 }
 
-/// return path LOG_FILE
+/// return full path LOG_FILE
 pub fn full_path_log() -> PathBuf {
-    home_dir().expect("Home directory not found").join(LOG_FILE)
+    get_home_dir().expect("Home dir not found").join(LOG_FILE)
 }
 
 /// set commands.toml on install app, check on run & reset
@@ -110,4 +107,11 @@ pub fn load_commands() -> Result<crate::CommandsConfig, Box<dyn std::error::Erro
 pub fn save_commands(config: &crate::CommandsConfig) -> Result<(), Box<dyn std::error::Error>> {
     fs::write(full_path_commands(), toml::to_string(config)?)?;
     Ok(())
+}
+
+/// return linux home dir
+pub fn get_home_dir() -> Result<PathBuf, String> {
+    std::env::var("HOME")
+        .map(PathBuf::from)
+        .map_err(|_| "Failed to get $HOME".to_string())
 }

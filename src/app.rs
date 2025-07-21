@@ -59,7 +59,7 @@ pub fn App() -> impl IntoView {
     let (status, set_status) = signal(String::from("Ok( Loading configuration )"));
     let (ttime, set_ttime) = signal(String::from(""));
     let (highlight, set_highlight) = signal(false);
-    let (is_autostart, set_autostart) = signal(false);
+    let (autostart, set_autostart) = signal(false);
     let (is_maximized, set_is_maximized) = signal("max0");
     //+ init commands on open window
     let load = move || {spawn_local(async move {
@@ -156,17 +156,6 @@ pub fn App() -> impl IntoView {
         });
     };
 
-    // autostart check
-    let check_autostart = move || {
-        spawn_local(async move {
-            let js = invoke_without_args("is_autostart_enabled").await;
-            if let Ok(enabled) = from_value::<bool>(js) {
-                set_autostart.set(enabled);
-            }
-        });
-    };
-    check_autostart();
-
     let ctrl_window = move |ctrl| {
         if ctrl == "max0"{
             set_is_maximized.set("max1");
@@ -178,29 +167,27 @@ pub fn App() -> impl IntoView {
         });
     };
 
+    let autostart_status = move || {
+        spawn_local(async move {
+            let js = invoke_without_args("autostart_status").await;
+            if let Ok(enabled) = from_value::<bool>(js) {
+                set_autostart.set(enabled);
+            }else{
+                set_autostart.set(false);
+            }
+        });
+    };
+    autostart_status();
+
     let toggle_autostart = move || {
         spawn_local(async move {
             // Проверяем текущий статус
-            let status_js = invoke_without_args("is_autostart_enabled").await;
+            let status_js = invoke_without_args("autostart_enable").await;
             let current_status = from_value::<Result<String, String>>(status_js)
                 .unwrap_or(Err("Err( Autostart status unknown )".to_string()));
+            println!("{current_status:?}");
 
-            // Определяем действие
-            let action = match current_status {
-                Ok(msg) if msg.contains("enabled") => "disable_autostart",
-                _ => "enable_autostart",
-            };
-
-            // Выполняем действие
-            let result_js = invoke_without_args(action).await;
-            let result = from_value::<Result<String, String>>(result_js)
-                .unwrap_or(Err("Autostart action failed".to_string()));
-
-            // Обновляем статус
-            match result {
-                Ok(msg) => set_status.set(format!("Ok( Autostart status: {msg} )")),
-                Err(e) => set_status.set(format!("Err( {e} )")),
-            }
+            autostart_status();
         });
     };
 
@@ -212,7 +199,6 @@ pub fn App() -> impl IntoView {
     });
 
     view! {
-
         <main class="container">
             <div data-tauri-drag-region class="titlebar">
                 <div class="titlebar-title">"$_ Gucli Settings"</div>
@@ -226,9 +212,9 @@ pub fn App() -> impl IntoView {
             <div class="main_settings gridd topline buttons">
                 <button
                     on:click=move |_| toggle_autostart()
-                    class=move || if is_autostart.get() { "ok-bg" } else { "" }
+                    class=move || if autostart.get() { "ok-bg" } else { "" }
                 >
-                    {move || if is_autostart.get() { "Autostart: ON" } else { "Autostart: OFF" }}
+                    {move || if autostart.get() { "Autostart: ON" } else { "Autostart: OFF" }}
                 </button>
                 <button on:click=move |_| reset_commands() class="err-bg">"Reset & Restart"</button>
             </div>
