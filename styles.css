@@ -35,6 +35,7 @@ body{display:block;margin:0;height: 100%;overflow: hidden;}
 .commands.form > div{display: grid;grid-template-columns: 4fr 1fr 1fr 1fr 1fr; text-align: center;align-items: center;justify-content: center;}
 .commands.form div.chb{display:flex;justify-items: center;justify-content: center;}
 .topline{display:inline-flex; width: 100%;align-items: baseline; justify-content: space-evenly;}
+.topline>button{min-width: 9rem;}
 .status{border-top: 1px solid darkgray;border-bottom: 1px solid darkgray;display:grid;grid-template-columns: 1fr 1fr 6fr;gap: 1rem;padding: 1rem 0;}
 .status > div:nth-child(1){white-space: nowrap;}
 .status > div:nth-child(1) > *{margin:0.6rem 0 0.6rem 0; font-weight: 700;}
