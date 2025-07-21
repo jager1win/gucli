@@ -5,6 +5,9 @@ use tracing_subscriber::fmt::time::FormatTime;
 use tracing_subscriber::fmt::format::Writer;
 use chrono::Local;
 use gucli_lib::files::LineLimitedWriter;
+use std::fs::{File, OpenOptions};
+use std::os::unix::io::AsRawFd;
+use nix::libc;
 
 struct LogTime;
 
@@ -35,7 +38,32 @@ fn init_tracing() {
         .expect("Failed to init logger");
 }
 
+// lock - single instance
+fn enforce_single_instance() -> Result<File, String> {
+    let file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open("/tmp/gucli.lock")
+        .map_err(|e| format!("Failed to open lock file: {e}"))?;
+
+    unsafe {
+        if libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) != 0 {
+            return Err("Another instance is already running".to_string());
+        }
+    }
+
+    Ok(file)
+}
+
 fn main() {
     init_tracing();
+    let _lock = match enforce_single_instance() {
+        Ok(file) => file,
+        Err(e) => {
+            eprintln!("{e}");
+            std::process::exit(1);
+        }
+    };
     gucli_lib::run();
 }

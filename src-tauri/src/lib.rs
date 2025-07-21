@@ -69,12 +69,7 @@ async fn run_test(cmd: Command) -> String {
 
 pub fn run() {
     if let Err(e) = set_config(None) {
-        log::error!("Failed to init config: {e}");
-    }
-
-    let notif = std::env::var("DBUS_SESSION_BUS_ADDRESS").is_ok();
-    if !notif {
-        error!("Fail notification - DBUS_SESSION_BUS_ADDRESS return false");
+        error!("Failed to init config: {e}");
     }
 
     tauri::Builder::default()
@@ -131,15 +126,6 @@ pub fn run() {
 
             Ok(())
         })
-        .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
-            if let Some(tray) = app.tray_by_id("main") {
-                tray.set_visible(true).ok();
-            }
-            if let Some(window) = app.get_webview_window("settings") {
-                let _ = window.set_focus();
-            }
-            std::process::exit(0);
-        }))
         .invoke_handler(tauri::generate_handler![
             get_commands,
             set_commands,
@@ -200,12 +186,6 @@ fn run_command(cmd: &Command) -> Result<String, String> {
     if !is_success || cmd.system_notification {
         let (summary, body) = message.split_at(message.find('\n').unwrap_or(message.len()));
         send_notification(summary, body);
-        let _ = stdcom::new("notify-send")
-            .arg(summary)
-            .arg(body)
-            .arg("--app-name=gucli")
-            .arg("--icon=system")
-            .status();
     }
 
     if is_success {
@@ -234,7 +214,7 @@ fn send_notification(summary: &str, body: &str) {
         let _ = stdcom::new("notify-send")
             .arg(summary)
             .arg(body)
-            .arg("--app-name=gucli")
+            .arg("--app-name=gucli-tray")
             .arg("--icon=system")
             .status();
     } else {
