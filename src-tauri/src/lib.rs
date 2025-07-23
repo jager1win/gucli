@@ -13,7 +13,7 @@ use crate::files::*;
 pub struct Command {
     pub name: String,
     pub active: bool,
-    pub system_notification: bool,
+    pub sn: bool,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize)]
@@ -69,12 +69,16 @@ async fn run_test(cmd: Command) -> String {
 
 pub fn run() {
     if let Err(e) = set_config(None) {
-        error!("Failed to init config: {e}");
+        error!("Failed to init config: {}",e);
+        std::process::exit(1);
     }
-
+    let commands_config = load_commands().unwrap_or_else(|err| {
+        error!("Failed to load commands: {}", err);
+        std::process::exit(1);
+    });
     tauri::Builder::default()
         .setup(|app| {
-            let commands_config = load_commands().unwrap();
+            
             // tray menu
             let settings = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
             let restart = MenuItem::with_id(app, "restart", "Restart", true, None::<&str>)?;
@@ -183,7 +187,7 @@ fn run_command(cmd: &Command) -> Result<String, String> {
         Err(err) => error!("Command <{}> Error: {}", cmd.name.clone(), err),
     }
 
-    if !is_success || cmd.system_notification {
+    if !is_success || cmd.sn {
         let (summary, body) = message.split_at(message.find('\n').unwrap_or(message.len()));
         send_notification(summary, body);
     }
@@ -240,9 +244,13 @@ async fn autostart_enable() -> Result<String, String> {
 
         let desktop_file = format!(
             "[Desktop Entry]\n\
+            Name=Gucli\n\
             Type=Application\n\
-            Name=gucli\n\
+            Categories=Utility\n\
+            StartupNotify=true\n\
             Exec={}\n\
+            X-KDE-autostart-after=panel\n\
+            X-LXQt-Need-Tray=true\n\
             X-GNOME-Autostart-enabled=true\n",
             exec_path.display()
         );

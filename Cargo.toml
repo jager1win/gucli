@@ -11,10 +11,15 @@ wasm-bindgen-futures = "0.4"
 js-sys = "0.3"
 serde = { version = "1", features = ["derive"] }
 serde-wasm-bindgen = "0.6"
-console_error_panic_hook = "0.1.7"
-console_log = "1.0.0"
-log = "0.4.27"
-chrono = "0.4.41"
+console_error_panic_hook = "0.1"
+console_log = "1.0"
+log = "0.4"
+chrono = "0.4"
 
 [workspace]
 members = ["src-tauri"]
+
+[profile.release]
+opt-level = "z"  # Максимальная оптимизация по размеру
+lto = true      # Агрессивная оптимизация на этапе линковки
+panic = "abort"  # Убираем обработку паник (уменьшает размер)

@@ -1,13 +1,14 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "gucli",
+  "productName": "Gucli",
   "version": "0.1.0",
   "identifier": "sdfjoisdj490234gucli",
   "build": {
     "beforeDevCommand": "trunk serve",
     "devUrl": "http://localhost:1420",
     "beforeBuildCommand": "trunk build",
-    "frontendDist": "../dist"
+    "frontendDist": "../dist",
+    "removeUnusedCommands": true
   },
   "app": {
     "withGlobalTauri": true,
@@ -44,7 +45,7 @@
       },
       "deb": {
         "files": {},
-        "depends": ["libnotify-bin"]
+        "depends": []
       },
       "rpm": {
         "epoch": 0,

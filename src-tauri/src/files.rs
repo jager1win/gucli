@@ -84,11 +84,11 @@ pub fn set_config(reset: Option<bool>) -> io::Result<String> {
     if !commands_path.exists() || reset {
         fs::create_dir_all(commands_path.parent().unwrap())?;
 
-        let default_config = r#"# params: command=string(with args), active=bool(default true), system_notification=bool(default=true)
+        let default_config = r#"# params: command=string(with args), active=bool(default true), sn=bool(default=true)
 [[command]]
 name = "hostname -A"
 active = true
-system_notification = true"#;
+sn = true"#;
 
         fs::write(&commands_path, default_config.trim())?;
         Ok("File created".to_string())

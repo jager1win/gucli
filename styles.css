@@ -3,6 +3,7 @@
   font-size: 0.9rem;
 
   --main-color:oklch(13% .028 261.692);
+  --main-bg-color:oklch(87.2% 0.01 258.338);
   --green: oklch(64.8% 0.119 151.328);
   --warn: oklch(76.9% 0.188 70.08);
   --err: oklch(67.7% 0.245 27.325);
@@ -10,10 +11,11 @@
   --gr:oklch(70.7% 0.022 261.325);
   height: 100%;
   display: block;
-  border-radius: 4px;border:2px solid var(--err);
+  border:2px solid var(--gr);
+  border-radius: 4px;
   padding: 0;margin:0;
   color: var(--main-color);
-  background-color: oklch(87.2% 0.01 258.338);
+  background-color: var(--main-bg-color);
   box-sizing: border-box;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -96,12 +98,18 @@ button:active {border-color: #396cd8;background-color: #e8e8e8;}
 input,button { outline: none;}
 
 .titlebar {
+  position: sticky;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 1000;
+  background-color: var(--main-bg-color);
     margin: 0 1rem 4px;
     height: 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.2rem 0.4rem;
+    padding: 0.4rem 0.4rem;
     user-select: none;
     border-bottom: 1px solid darkgrey;
     -webkit-user-select: none;
@@ -121,13 +129,14 @@ input,button { outline: none;}
 @media (prefers-color-scheme: dark) {
   :root {
     --main-color:oklch(96.7% 0.003 264.542);
+    --main-bg-color:#212529;
     --green: oklch(44.8% 0.119 151.328);
     --warn: oklch(65.2% 0.199 91.936);
     --err: oklch(25.8% 0.092 26.042);
     --act:oklch(67.3% 0.182 276.935);
     --gr:oklch(27.8% 0.033 256.848);
     color: var(--main-color);
-    background-color: #212529;
+    background-color: var(--main-bg-color);
   }
   .warn-bg{background-color: var(--warn);}
   a:hover {color: var(--act)}

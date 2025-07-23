@@ -9,7 +9,7 @@ use chrono::Local;
 pub struct Command {
     pub name: String,
     pub active: bool,
-    pub system_notification: bool,
+    pub sn: bool,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize)]
@@ -23,7 +23,7 @@ impl Default for Command {
         Command {
             name: String::new(),
             active: true,
-            system_notification: true,
+            sn: true,
         }
     }
 }
@@ -56,7 +56,7 @@ extern "C" {
 #[component]
 pub fn App() -> impl IntoView {
     let (commands, set_commands) = signal(Vec::<Command>::new());
-    let (status, set_status) = signal(String::from("Ok( Loading configuration )"));
+    let (status, set_status) = signal(String::from("Ok( Configuration loaded )"));
     let (ttime, set_ttime) = signal(String::from(""));
     let (highlight, set_highlight) = signal(false);
     let (autostart, set_autostart) = signal(false);
@@ -201,7 +201,7 @@ pub fn App() -> impl IntoView {
     view! {
         <main class="container">
             <div data-tauri-drag-region class="titlebar">
-                <div class="titlebar-title">"$_ Gucli Settings"</div>
+                <div class="titlebar-title">"$ Gucli Settings"</div>
                 <div class="titlebar-controls">
                     <button on:click=move |_| ctrl_window("min") id="titlebar-minimize">"─"</button>
                     <button on:click=move |_| ctrl_window(is_maximized.get()) id="titlebar-maximize">{move || if is_maximized.get() == "max1"{ "❐" } else { "□" }}</button>
@@ -240,14 +240,14 @@ pub fn App() -> impl IntoView {
                         children=move |(i, cmd)| {
                             let (name, set_name) = signal(cmd.name.clone());
                             let (active, set_active) = signal(cmd.active);
-                            let (sysn, set_sysn) = signal(cmd.system_notification);
+                            let (sysn, set_sysn) = signal(cmd.sn);
                             // When any local signal changes, we push the changes
                             let sync_to_buffer = move || {
                                 let mut buf = commands.get();
                                 if let Some(slot) = buf.get_mut(i) {
                                     slot.name = name.get();
                                     slot.active = active.get();
-                                    slot.system_notification = sysn.get();
+                                    slot.sn = sysn.get();
                                 }
                                 set_commands.update(move |b| *b = buf.clone());
                             };
@@ -305,15 +305,11 @@ pub fn App() -> impl IntoView {
                     <ul>
                         <li><b class="stt">"Config file"</b>" is located at "<b class="stt">"`/home/$USER/.config/gucli/settings.toml`"</b><br />
                         "Default settings (after install or `Reset to default`) look like:"<br />
-                            <pre>"# params: command=string(with args), active=bool(default true), system_notification=bool(default=true)"<br />
+                            <pre>"# params: command=string(with args), active=bool(default true), sn=bool(default=true)"<br />
                                 "[[command]]"<br />
                                 "name = \"hostname -A\""<br />
                                 "active = true"<br />
-                                "system_notification = true"<br />
-                                "[[command]]"<br />
-                                "name = \"zsh -c 'for i in {1..3}; do echo $i; done'\""<br />
-                                "active = true"<br />
-                                "system_notification = true"<br />
+                                "sn = true"<br />
                             </pre>
                             "The first line describes the structure - add commands accordingly"
                         </li>
