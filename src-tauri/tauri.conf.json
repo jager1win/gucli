@@ -2,7 +2,7 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Gucli",
   "version": "0.1.0",
-  "identifier": "sdfjoisdj490234gucli",
+  "identifier": "site.jager.gucli",
   "build": {
     "beforeDevCommand": "trunk serve",
     "devUrl": "http://localhost:1420",
@@ -24,12 +24,13 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["deb","rpm","appimage"],
+    "targets": ["deb","rpm"],
     "category": "Utility",
-    "licenseFile": "../LICENSE",
-    "license": "GPLv3",
+    "licenseFile":"../LICENSE",
+    "license": "GPL-3.0+",
     "shortDescription": "GUI tray interface for cli commands",
     "longDescription": "Run custom console commands by clicking in the tray",
+    "homepage": "https://github.com/jager1win/gucli",
     "icon": [
       "icons/32x32.png",
       "icons/48x48.png",
@@ -39,17 +40,22 @@
       "icons/512x512.png"
     ],
     "linux": {
-      "appimage": {
-        "bundleMediaFramework": false,
-        "files": {}
-      },
       "deb": {
         "files": {},
-        "depends": []
+        "depends": [
+          "libc6 (>= 2.35)",
+          "libgtk-3-0 (>= 3.24) | libqt5core5a (>= 5.15)",
+          "libayatana-appindicator3-1 | libappindicator3-1 | libkf5notifications5"
+        ]
       },
       "rpm": {
         "epoch": 0,
-        "files": {}
+        "files": {},
+        "depends": [
+          "glibc >= 2.35",
+          "gtk3 >= 3.24 | qt5-qtbase >= 5.15",
+          "ayatana-appindicator3 | libappindicator-gtk3 | kf5-knotifications"
+        ]
       }
     }
   }

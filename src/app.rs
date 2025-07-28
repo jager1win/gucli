@@ -61,6 +61,7 @@ pub fn App() -> impl IntoView {
     let (highlight, set_highlight) = signal(false);
     let (autostart, set_autostart) = signal(false);
     let (is_maximized, set_is_maximized) = signal("max0");
+    let (reset, set_reset) = signal(false);
     //+ init commands on open window
     let load = move || {spawn_local(async move {
         let js_value = invoke_without_args("get_commands").await;
@@ -106,17 +107,21 @@ pub fn App() -> impl IntoView {
 
     //+ reset settings.toml to default
     let reset_commands = move || {
-        spawn_local(async move {
-            let js = invoke_without_args("reset_commands").await;
-            let result: Result<String, String> = from_value(js).map_err(|e| format!("deserialize failed: {e}"));
-            match result {
-                Ok(_) => { 
-                    set_status.set("Ok( Settings reset to default )".to_string());
-                    let _ = invoke("request_restart", JsValue::NULL).await;
+        if !reset.get(){
+            set_reset.set(true);
+        }else{
+            spawn_local(async move {
+                let js = invoke_without_args("reset_commands").await;
+                let result: Result<String, String> = from_value(js).map_err(|e| format!("deserialize failed: {e}"));
+                match result {
+                    Ok(_) => { 
+                        set_status.set("Ok( Settings reset to default )".to_string());
+                        let _ = invoke("request_restart", JsValue::NULL).await;
+                    }
+                    Err(e) => set_status.set(format!("Err( Reset failed: {e}")),
                 }
-                Err(e) => set_status.set(format!("Err( Reset failed: {e}")),
-            }
-        });
+            });
+        }
     };
 
     //+ Add a new row with default values
@@ -215,8 +220,13 @@ pub fn App() -> impl IntoView {
                     class=move || if autostart.get() { "ok-bg" } else { "" }
                 >
                     {move || if autostart.get() { "Autostart: ON" } else { "Autostart: OFF" }}
+                </button><button on:click=move |_| reset_commands() class="err-bg">
+                    {move || match reset.get() {
+                        true => "Really reset?",
+                        false => "Reset & Restart"
+                    }}
                 </button>
-                <button on:click=move |_| reset_commands() class="err-bg">"Reset & Restart"</button>
+                
             </div>
 
             <div class="status">
