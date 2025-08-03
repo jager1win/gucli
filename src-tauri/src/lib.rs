@@ -78,9 +78,10 @@ pub fn run() {
     });
     tauri::Builder::default()
         .setup(|app| {
+
             
             // tray menu
-            let settings = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
+            let settings = MenuItem::with_id(app, "settings", "Settings", true, Some("src-tauri/icons/333.ico"))?;
             let restart = MenuItem::with_id(app, "restart", "Restart", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
 

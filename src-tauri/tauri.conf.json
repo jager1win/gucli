@@ -14,8 +14,10 @@
     "withGlobalTauri": true,
     "windows": [
         {
-            "label": "main",
-            "visible": false
+          "label": "main",
+          "visible": false,
+          "decorations": false,
+          "transparent": true 
         }
     ],
     "security": {
@@ -44,8 +46,8 @@
         "files": {},
         "depends": [
           "libc6 (>= 2.35)",
-          "libgtk-3-0 (>= 3.24) | libqt5core5a (>= 5.15)",
-          "libayatana-appindicator3-1 | libappindicator3-1 | libkf5notifications5"
+          "libgtk-3-0 (>= 3.24)",
+          "libayatana-appindicator-glib | libayatana-appindicator3-1 | libappindicator3-1 | libkf5notifications5"
         ]
       },
       "rpm": {
@@ -53,7 +55,7 @@
         "files": {},
         "depends": [
           "glibc >= 2.35",
-          "gtk3 >= 3.24 | qt5-qtbase >= 5.15",
+          "gtk3 >= 3.24",
           "ayatana-appindicator3 | libappindicator-gtk3 | kf5-knotifications"
         ]
       }

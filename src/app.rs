@@ -109,6 +109,7 @@ pub fn App() -> impl IntoView {
     let reset_commands = move || {
         if !reset.get(){
             set_reset.set(true);
+            set_status.set("Warn( Click again to reset )".to_string());
         }else{
             spawn_local(async move {
                 let js = invoke_without_args("reset_commands").await;
@@ -188,11 +189,10 @@ pub fn App() -> impl IntoView {
         spawn_local(async move {
             // Проверяем текущий статус
             let status_js = invoke_without_args("autostart_enable").await;
-            let current_status = from_value::<Result<String, String>>(status_js)
+            let _current_status = from_value::<Result<String, String>>(status_js)
                 .unwrap_or(Err("Err( Autostart status unknown )".to_string()));
-            println!("{current_status:?}");
-
             autostart_status();
+            set_status.set("Ok( Autostart updated )".to_string());
         });
     };
 
