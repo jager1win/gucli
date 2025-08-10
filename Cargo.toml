@@ -19,6 +19,6 @@ chrono = "0.4"
 members = ["src-tauri"]
 
 [profile.release]
-opt-level = "z"  # Максимальная оптимизация по размеру
-lto = true      # Агрессивная оптимизация на этапе линковки
-panic = "abort"  # Убираем обработку паник (уменьшает размер)
+opt-level = "z"  # Maximum optimization by size
+lto = true      # Aggressive optimization at the linking stage
+panic = "abort"  # Remove panic processing (reduces size)
