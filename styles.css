@@ -24,7 +24,7 @@
   overflow: hidden;
 }
 
-body{margin:0;clip-path: inset(0 round 1rem);overflow: auto;height: 100%;
+body{margin:0;clip-path: inset(0 round 1rem);overflow: visible;height: 100vh;
   background-color: transparent;/*var(--main-bg-color);*/
   box-shadow: 0 0 10px oklch(21% 0.006 285.885);
   padding: 0;
@@ -61,11 +61,11 @@ body{margin:0;clip-path: inset(0 round 1rem);overflow: auto;height: 100%;
 .titlebar-controls button:hover {border: 1px solid var(--act);}
 .titlebar-title{margin-right: 1rem;}
 [data-tauri-drag-region] {cursor: move;}
-.container {margin: 0;padding:0;display: block;overflow: scroll;background-color: var(--main-bg-color);min-height: 90vh;
+.container {margin: 0;padding:1rem;display: block;overflow-y: auto;background-color: var(--main-bg-color);height: 90vh;
 border-radius: 0 0 0.8rem 0.8rem;}
 
-.commands.form{overflow: auto;}
-.commands.form > div{display: grid;grid-template-columns: 4fr 1fr 1fr 1fr 1fr; text-align: center;align-items: center;justify-content: center;}
+.commands.form{}
+.commands.form > div.row{display: grid;grid-template-columns: 4fr 1fr 1fr 1fr 1fr; text-align: center;align-items: center;justify-content: center;}
 .commands.form div.chb{display:flex;justify-items: center;justify-content: center;}
 .topline{display:inline-flex; width: 100%;align-items: center; justify-content: space-evenly;height: 3rem;}
 .topline>button{min-width: 9rem;}
@@ -75,14 +75,14 @@ border-radius: 0 0 0.8rem 0.8rem;}
 .status > div:nth-child(1) > *{margin:0.6rem 0 0.6rem 0; font-weight: 700;}
 .status > div:nth-child(2){white-space: wrap;color: var(--g2);word-wrap:break-word;overflow-wrap:anywhere;}
 .status > div:nth-child(3){overflow: auto;display: flex;overflow: overlay;scrollbar-gutter: stable;}
-.status-block{flex: 1 1 auto;white-space: pre;width: max-content;min-height:3rem;padding: 0 0.4rem;overflow: auto;max-height: 8rem;}
+.status-block{flex: 1 1 auto;white-space: pre;width: max-content;min-height:3rem;padding: 0 0.4rem;overflow: auto;max-height: 3rem;}
 div.buttons{display: flex; justify-content: space-evenly;}
-.bb{display: flex;}
-div.help{margin: 1rem 0 0}
-div.help ul{padding-left: 1.2rem;}
+div.help{margin: 0}
 h5{cursor:default}
 
 .err-bg{background-color: var(--err);}
+.err-text{color: var(--err);}
+.warn-text{color: var(--warn);}
 .ok-bg{background-color: var(--g2);}
 .warn-bg{background-color: var(--warn);}
 .help summary{text-align: center;}
@@ -125,9 +125,7 @@ input,button {
 
 input, button [type="checkbox"]{cursor: pointer;}
 
-.warn-bg{background-color: var(--warn);}
 .text-bg{background-color: var(--gr);border-radius: 0.4rem;}
-
 
 button.tabs-header{background-color: transparent;border:none;border-radius:0;border-bottom: 2px solid transparent;box-shadow: unset;}
 button.tabs-header.active{border-bottom: 2px solid var(--g2);color:var(--g2);font-weight: bold;}

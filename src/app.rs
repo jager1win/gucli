@@ -248,7 +248,6 @@ pub fn App() -> impl IntoView {
         </div>
 
         <main class="container">
-
             <Show when=move || active_tab.get() == 0>
                 <div class="topline">
                     <button
@@ -276,7 +275,9 @@ pub fn App() -> impl IntoView {
                     </div>
                     <div>
                         <span
-                            class="status-block text-bg"
+                            class="status-block"
+                            class:err-text=move || status.get().starts_with("Er")
+                            class:warn-text=move || status.get().starts_with("Warn")
                             class:highlight=move || highlight.get()
                             id=move || ttime.get().to_string()
                             data-update=move || ttime.get().to_string()
@@ -359,30 +360,22 @@ pub fn App() -> impl IntoView {
                             }
                         }
                     />
+                    <div class="buttons bb">
+                        <button class="ok-bg" on:click=move |_| add_command()>
+                            "Add row"
+                        </button>
+                        <button class="ok-bg" on:click=move |_| save()>
+                            "Save & Restart"
+                        </button>
+                    </div>
                 </div>
-                <div class="buttons bb">
-                    <button class="ok-bg" on:click=move |_| add_command()>
-                        "Add row"
-                    </button>
-                    <button class="ok-bg" on:click=move |_| save()>
-                        "Save & Restart"
-                    </button>
-                </div>
-
             </Show>
             <Show when=move || active_tab.get() == 1>
-                <div class="tab-pane">
-                    <ManSearch />
-                </div>
+                <ManSearch />
             </Show>
             <Show when=move || active_tab.get() == 2>
-                <div class="tab-pane">
-                    <Help />
-                </div>
+                <Help />
             </Show>
-
-            <div></div>
-
         </main>
     }
 }
@@ -390,8 +383,8 @@ pub fn App() -> impl IntoView {
 #[component]
 pub fn ManSearch() -> impl IntoView {
     use leptos::{ev::SubmitEvent};
-    static HELP: &str = "Можно в input написать просто название команды - будет произведен поиск по `man` && `--help`. 
-Если нужна справка со специфическими ключами [--longhelp, --help-all] - введите нужную команду полностью";
+    static HELP: &str = "You can simply write the command name in input - a search will be performed by `man` && `--help`.
+If you need help with specific keys [--longhelp, --help-all] - enter the required command in full";
     let (man, set_man) = signal(HELP.to_string());
     let (input_value, set_input_value) = signal("".to_string());
 
@@ -427,7 +420,7 @@ pub fn ManSearch() -> impl IntoView {
         <form on:submit=on_submit class="man_form">
             <input
                 type="text"
-                placeholder="e.g. `whoami`"
+                placeholder="e.g. `id`"
                 size=40
                 prop:value=move || input_value.get()
                 on:input=move |ev| set_input_value.set(event_target_value(&ev))
@@ -489,6 +482,23 @@ pub fn Help() -> impl IntoView {
                     <br />
                     "In tray menu it may appear as `_` due to system formatting"
                     <br />
+                </li>
+                <li>
+                    <strong>"Linux Command Types:"</strong>
+                    <ul>
+                        <li>
+                            <b class="stt">"Regular"</b>
+                            " (e.g., `ls -la /home/$USER/Pictures`): Can be converted to a string and output shown in notification"
+                        </li>
+                        <li>
+                            <b class="stt">"Long-running"</b>
+                            " (e.g., `watch`): Cannot be converted to a string"
+                        </li>
+                        <li>
+                            <b class="stt">"No-output"</b>
+                            " (e.g., `sleep`): Notifications can be disabled"
+                        </li>
+                    </ul>
                 </li>
                 <li>
                     <strong>"Linux Command Types:"</strong>
