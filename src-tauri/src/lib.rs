@@ -11,13 +11,14 @@ use crate::files::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Command {
+    pub id: usize,
     pub command: String,
     pub icon: String,
     pub sn: bool,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize)]
-pub struct CommandsConfig {
+pub struct AppCommandsConfig {
     pub commands: Vec<Command>,
 }
 
@@ -81,7 +82,7 @@ async fn get_commands() -> Result<Vec<Command>, String> {
 
 #[tauri::command]
 async fn set_commands(commands: Vec<Command>) -> Result<String, String> {
-    let config = CommandsConfig { commands };
+    let config = AppCommandsConfig { commands };
     save_commands(&config).map_err(|e| e.to_string())?;
     Ok("Commands saved".to_string())
 }
@@ -98,8 +99,8 @@ async fn request_restart(app: tauri::AppHandle) {
 }
 
 #[tauri::command]
-async fn run_test(cmd: String, sn:bool) -> Result<String, String>  {
-    match run_command(cmd, sn) {
+async fn run_test(cmd: Command) -> Result<String, String>  {
+    match run_command(cmd.command, cmd.sn) {
         Ok(success) => Ok(success),
         Err(error) => Ok(error),
     }
@@ -154,9 +155,7 @@ pub fn run() {
                     "quit" => app.exit(0),
                     id if id.starts_with("cmd_") => {
                         let cmd_com = id.replace("cmd_", "");
-                        if let Some(cmd) =
-                            commands_config.commands.iter().find(|c| c.command == cmd_com)
-                        {
+                        if let Some(cmd) = commands_config.commands.iter().find(|c| c.command == cmd_com) {
                             let _ = run_command(cmd_com, cmd.sn);
                         }
                     }

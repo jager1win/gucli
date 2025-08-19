@@ -7,6 +7,7 @@ use chrono::Local;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Command {
+    pub id: usize,
     pub command: String,
     pub icon: String,
     pub sn: bool,
@@ -18,11 +19,12 @@ pub struct CommandsConfig {
     pub commands: Vec<Command>,
 }
 
-impl Default for Command {
-    fn default() -> Self {
+impl Command {
+    pub fn new(id: usize) -> Self {
         Command {
-            command: String::new(),
-            icon: String::new(),
+            id,
+            command: String::from("new"),
+            icon: String::from(""),
             sn: true,
         }
     }
@@ -134,7 +136,7 @@ pub fn App() -> impl IntoView {
     //+ Add a new row with default values
     let add_command = move || {
         let mut buf = commands.get();
-        buf.push(Command::default());
+        buf.push(Command::new(66));
         set_commands.update(move |b| *b = buf.clone());
         set_status.set("Warning( Specify the command and its parameters and test it )".to_string());
     };
@@ -295,21 +297,22 @@ pub fn App() -> impl IntoView {
                         <span>"test"</span>
                     </div>
 
-                    <For
-                        each=move || commands.get().into_iter().enumerate()
-                        key=|(i, _)| *i
-                        children=move |(i, cmd)| {
-                            let (command, set_command) = signal(cmd.command.clone());
-                            let (icon, set_icon) = signal(cmd.icon);
-                            let (sn, set_sn) = signal(cmd.sn);
+                    <ForEnumerate
+                        each=move || commands.get()
+                        key=|command| command.id
+                        children={move |i: ReadSignal<usize>, command: Command| {
+                            let (com, set_com) = signal(command.command.clone());
+                            let (icon, set_icon) = signal(command.icon);
+                            let (sn, set_sn) = signal(command.sn);
                             let sync_to_buffer = move || {
                                 let mut buf = commands.get();
-                                if let Some(slot) = buf.get_mut(i) {
-                                    slot.command = command.get();
+                                if let Some(slot) = buf.get_mut(i.get()) {
+                                    slot.command = com.get();
                                     slot.icon = icon.get();
                                     slot.sn = sn.get();
                                 }
                                 set_commands.update(move |b| *b = buf.clone());
+                                log::debug!("save->commands: {:?}", commands.get());
                             };
                             // When any local signal changes, we push the changes
                             view! {
@@ -317,15 +320,16 @@ pub fn App() -> impl IntoView {
                                     <input
                                         type="text"
                                         placeholder="Danger zone! Verify commands before adding..."
-                                        value=move || command.get()
+                                        value=move || com.get()
                                         on:change=move |ev| {
-                                            set_command.set(event_target_value(&ev));
+                                            set_com.set(event_target_value(&ev));
                                             sync_to_buffer();
                                         }
                                     />
                                     <div class="chb">
                                         <input
                                             type="text"
+                                            size=10
                                             checked=move || icon.get()
                                             on:change=move |ev| {
                                                 set_icon.set(event_target_value(&ev));
@@ -344,13 +348,13 @@ pub fn App() -> impl IntoView {
                                         />
                                     </div>
                                     <div>
-                                        <button on:click=move |_| delete_command(i) class="err-bg">
+                                        <button on:click=move |_| delete_command(i.get()) class="err-bg">
                                             "Delete"
                                         </button>
                                     </div>
                                     <div>
                                         <button
-                                            on:click=move |_| run_test(commands.get()[i].clone())
+                                            on:click=move |_| run_test(commands.get()[i.get()].clone())
                                             class="warn-bg"
                                         >
                                             "Run test"
@@ -358,7 +362,7 @@ pub fn App() -> impl IntoView {
                                     </div>
                                 </div>
                             }
-                        }
+                        }}
                     />
                     <div class="buttons bb">
                         <button class="ok-bg" on:click=move |_| add_command()>

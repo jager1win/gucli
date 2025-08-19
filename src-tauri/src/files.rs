@@ -1,10 +1,26 @@
 use std::fs;
 use std::io::{self, Write};
 use std::path::PathBuf;
+use serde::{Deserialize, Serialize};
 use tracing_subscriber::fmt::writer::MakeWriter;
 
 pub const COMMANDS_FILE: &str = ".config/gucli/commands.toml";
 pub const LOG_FILE: &str = ".config/gucli/gucli.log";
+
+// Структура для TOML (без ID)
+#[derive(Serialize, Deserialize)]
+pub struct TomlCommand {
+    pub command: String,
+    pub icon: String,
+    pub sn: bool,
+}
+
+// Конфигурация для TOML
+#[derive(Serialize, Deserialize)]
+pub struct CommandsConfig {
+    #[serde(rename = "commands")]
+    pub commands: Vec<TomlCommand>,
+}
 
 pub struct LineLimitedWriter {
     path: PathBuf,
@@ -101,15 +117,38 @@ sn = true"#;
     }
 }
 
-/// read commands.toml
-pub fn load_commands() -> Result<crate::CommandsConfig, Box<dyn std::error::Error>> {
+/// read commands.toml + add id
+pub fn load_commands() -> Result<crate::AppCommandsConfig, Box<dyn std::error::Error>> {
     let content = fs::read_to_string(full_path_commands())?;
-    Ok(toml::from_str(&content)?)
+    let toml_config: CommandsConfig = toml::from_str(&content)?;
+    
+    let commands_with_id = toml_config.commands
+        .into_iter()
+        .enumerate()
+        .map(|(id, toml_cmd)| crate::Command {
+            id,
+            command: toml_cmd.command,
+            icon: toml_cmd.icon,
+            sn: toml_cmd.sn,
+        })
+        .collect();
+    
+    Ok(crate::AppCommandsConfig { commands: commands_with_id })
 }
-
-/// write commands.toml
-pub fn save_commands(config: &crate::CommandsConfig) -> Result<(), Box<dyn std::error::Error>> {
-    fs::write(full_path_commands(), toml::to_string(config)?)?;
+/// write commands.toml + remove id
+pub fn save_commands(config: &crate::AppCommandsConfig) -> Result<(), Box<dyn std::error::Error>> {
+    // Преобразуем обратно в TOML формат (без ID)
+    let toml_commands: Vec<TomlCommand> = config.commands
+        .iter()
+        .map(|cmd| TomlCommand {
+            command: cmd.command.clone(),
+            icon: cmd.icon.clone(),
+            sn: cmd.sn,
+        })
+        .collect();
+    
+    let toml_config = CommandsConfig { commands: toml_commands };
+    let _ = fs::write(full_path_commands(), toml::to_string(&toml_config)?);
     Ok(())
 }
 
