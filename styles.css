@@ -28,8 +28,6 @@ body{margin:0;clip-path: inset(0 round 1rem);overflow: visible;height: 100vh;
   background-color: transparent;/*var(--main-bg-color);*/
   box-shadow: 0 0 10px oklch(21% 0.006 285.885);
   padding: 0;
-  /*outline-offset: -2px;
-  outline:2px solid var(--g1);*/
 }
 .titlebar {
   position: sticky;
@@ -61,11 +59,10 @@ body{margin:0;clip-path: inset(0 round 1rem);overflow: visible;height: 100vh;
 .titlebar-controls button:hover {border: 1px solid var(--act);}
 .titlebar-title{margin-right: 1rem;}
 [data-tauri-drag-region] {cursor: move;}
-.container {margin: 0;padding:1rem;display: block;overflow-y: auto;background-color: var(--main-bg-color);height: 90vh;
+.container {margin: 0;padding:0.1rem 1rem 1rem;display: block;overflow-y: auto;background-color: var(--main-bg-color);height: 90vh;
 border-radius: 0 0 0.8rem 0.8rem;}
 
-.commands.form{}
-.commands.form > div.row{display: grid;grid-template-columns: 4fr 1fr 1fr 1fr 1fr; text-align: center;align-items: center;justify-content: center;}
+.commands.form > div.row{display: grid;grid-template-columns: 2fr 1fr 1fr 1fr 1fr; text-align: center;align-items: center;justify-content: center;}
 .commands.form div.chb{display:flex;justify-items: center;justify-content: center;}
 .topline{display:inline-flex; width: 100%;align-items: center; justify-content: space-evenly;height: 3rem;}
 .topline>button{min-width: 9rem;}
@@ -73,24 +70,27 @@ border-radius: 0 0 0.8rem 0.8rem;}
   min-height: 3.6rem;align-items: center; grid-template-rows: auto;padding: 0.2rem 0.4rem;overflow: scroll;}
 .status > div:nth-child(1){white-space: nowrap;}
 .status > div:nth-child(1) > *{margin:0.6rem 0 0.6rem 0; font-weight: 700;}
-.status > div:nth-child(2){white-space: wrap;color: var(--g2);word-wrap:break-word;overflow-wrap:anywhere;}
+.status > div:nth-child(2){white-space: wrap;word-wrap:break-word;overflow-wrap:anywhere;}
 .status > div:nth-child(3){overflow: auto;display: flex;overflow: overlay;scrollbar-gutter: stable;}
 .status-block{flex: 1 1 auto;white-space: pre;width: max-content;min-height:3rem;padding: 0 0.4rem;overflow: auto;max-height: 3rem;}
 div.buttons{display: flex; justify-content: space-evenly;}
-div.help{margin: 0}
+div.help{margin: 0;padding: 1rem 0;}
 h5{cursor:default}
 
-.err-bg{background-color: var(--err);}
+.ok-text{color: var(--g2);}
 .err-text{color: var(--err);}
 .warn-text{color: var(--warn);}
 .ok-bg{background-color: var(--g2);}
+.err-bg{background-color: var(--err);}
 .warn-bg{background-color: var(--warn);}
 .help summary{text-align: center;}
+input.erri {border:1px solid var(--err)}
+input::placeholder {color: var(--warn);}
 code,pre {background-color: var(--gr2);padding: 1rem;border-radius: 0.4rem;font-family: monospace;overflow: auto;}
 .tc{text-align: center;}
 .row {display: flex;justify-content:space-between;margin:0.4rem;}
 .row.head,.status{font-weight: bold;}
-input::placeholder {color: var(--warn);opacity: 0.5;}
+
 .about{margin:2rem 0 0}
 a{color:var(--act)}
 .stt{
@@ -139,7 +139,7 @@ button:active {background-color: var(--main-bg-color);}
 @media (prefers-color-scheme: dark) {
   :root {
     --main-color:oklch(96.7% 0.003 264.542);
-    --main-bg-color:oklch(0.21 0.006 285.885);
+    --main-bg-color:oklch(21% 0.006 285.885 / 90%);/*zinc 900*/
     --warn: oklch(65.2% 0.199 91.936);
     --err: oklch(63.7% 0.237 25.331);
     --act:var(--g3);

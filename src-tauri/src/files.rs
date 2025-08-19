@@ -85,15 +85,19 @@ pub fn set_config(reset: Option<bool>) -> io::Result<String> {
         fs::create_dir_all(commands_path.parent().unwrap())?;
 
         let default_config = r#"# params: command=string(with args), active=bool(default true), sn=bool(default=true)
-[[command]]
-name = "hostname -A"
-active = true
-sn = true"#;
+[[commands]]
+command = "hostname -A"
+icon = "😀"
+sn = true
 
+[[commands]]
+command = "id"
+icon = "⤁"
+sn = true"#;
         fs::write(&commands_path, default_config.trim())?;
-        Ok("File created".to_string())
+        Ok("File commands.toml created".to_string())
     } else {
-        Ok("File exists".to_string())
+        Ok("File commands.toml exists".to_string())
     }
 }
 

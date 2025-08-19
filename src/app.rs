@@ -7,8 +7,8 @@ use chrono::Local;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Command {
-    pub name: String,
-    pub active: bool,
+    pub command: String,
+    pub icon: String,
     pub sn: bool,
 }
 
@@ -21,8 +21,8 @@ pub struct CommandsConfig {
 impl Default for Command {
     fn default() -> Self {
         Command {
-            name: String::new(),
-            active: true,
+            command: String::new(),
+            icon: String::new(),
             sn: true,
         }
     }
@@ -86,11 +86,11 @@ pub fn App() -> impl IntoView {
         // Check "name" - not empty & unique
         let mut names = std::collections::HashSet::new();
         for cmd in &buf {
-            if cmd.name.trim().is_empty() {
+            if cmd.command.trim().is_empty() {
                 set_status.set("Err( Field `command` cannot be empty )".to_string());
                 return;
             }
-            if !names.insert(cmd.name.clone()) {
+            if !names.insert(cmd.command.clone()) {
                 set_status.set("Err( Field `command` must be unique )".to_string());
                 return;
             }
@@ -152,7 +152,7 @@ pub fn App() -> impl IntoView {
 
     let run_test = move |cmd: Command| {
         log::info!("Testing command: {:?}", &cmd);
-        if cmd.name.trim().is_empty() {
+        if cmd.command.trim().is_empty() {
             set_status.set("Err( Field `command` cannot be empty )".to_string());
             return;
         }
@@ -289,8 +289,8 @@ pub fn App() -> impl IntoView {
                 <div class="commands form">
                     <div class="row head">
                         <span>"command"</span>
-                        <span>"active"</span>
-                        <span>"SN"</span>
+                        <span>"icon"</span>
+                        <span>"sn"</span>
                         <span>"delete"</span>
                         <span>"test"</span>
                     </div>
@@ -299,15 +299,15 @@ pub fn App() -> impl IntoView {
                         each=move || commands.get().into_iter().enumerate()
                         key=|(i, _)| *i
                         children=move |(i, cmd)| {
-                            let (name, set_name) = signal(cmd.name.clone());
-                            let (active, set_active) = signal(cmd.active);
-                            let (sysn, set_sysn) = signal(cmd.sn);
+                            let (command, set_command) = signal(cmd.command.clone());
+                            let (icon, set_icon) = signal(cmd.icon);
+                            let (sn, set_sn) = signal(cmd.sn);
                             let sync_to_buffer = move || {
                                 let mut buf = commands.get();
                                 if let Some(slot) = buf.get_mut(i) {
-                                    slot.name = name.get();
-                                    slot.active = active.get();
-                                    slot.sn = sysn.get();
+                                    slot.command = command.get();
+                                    slot.icon = icon.get();
+                                    slot.sn = sn.get();
                                 }
                                 set_commands.update(move |b| *b = buf.clone());
                             };
@@ -317,18 +317,18 @@ pub fn App() -> impl IntoView {
                                     <input
                                         type="text"
                                         placeholder="Danger zone! Verify commands before adding..."
-                                        value=move || name.get()
+                                        value=move || command.get()
                                         on:change=move |ev| {
-                                            set_name.set(event_target_value(&ev));
+                                            set_command.set(event_target_value(&ev));
                                             sync_to_buffer();
                                         }
                                     />
                                     <div class="chb">
                                         <input
-                                            type="checkbox"
-                                            checked=move || active.get()
+                                            type="text"
+                                            checked=move || icon.get()
                                             on:change=move |ev| {
-                                                set_active.set(event_target_checked(&ev));
+                                                set_icon.set(event_target_value(&ev));
                                                 sync_to_buffer();
                                             }
                                         />
@@ -336,9 +336,9 @@ pub fn App() -> impl IntoView {
                                     <div class="chb">
                                         <input
                                             type="checkbox"
-                                            checked=move || sysn.get()
+                                            checked=move || sn.get()
                                             on:change=move |ev| {
-                                                set_sysn.set(event_target_checked(&ev));
+                                                set_sn.set(event_target_checked(&ev));
                                                 sync_to_buffer();
                                             }
                                         />

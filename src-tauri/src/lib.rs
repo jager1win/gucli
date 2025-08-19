@@ -11,14 +11,13 @@ use crate::files::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Command {
-    pub name: String,
-    pub active: bool,
+    pub command: String,
+    pub icon: String,
     pub sn: bool,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize)]
 pub struct CommandsConfig {
-    #[serde(rename = "command")]
     pub commands: Vec<Command>,
 }
 
@@ -61,47 +60,6 @@ fn get_man(cmd: &str) -> Result<String, String> {
     }
 }
 
-/*#[tauri::command]
-fn get_man(cmd: &str) -> Result<String, String> {
-    if cmd.trim().is_empty() {
-        return Err("Enter the command to search for help".to_string());
-    }
-    const MIN_HELP_LENGTH: usize = 50;
-
-    let help_flags = [" --longhelp ", " --help-all ", " --help ", " help ", " -? ", "man ", " info ", " --usage ", " -help "];
-    
-    let has_help_flag = help_flags.iter().any(|&flag| {
-        cmd.starts_with(flag.trim_start()) ||  // "man ls" или "--help cmd"
-        cmd.contains(flag) ||                // "cmd --help -x"
-        cmd.ends_with(flag.trim_end())        // "cmd --help"
-    });
-    
-    if has_help_flag {
-        execute_command(cmd)
-    } else {
-        let variants = [format!("man -P cat {cmd}"),format!("{cmd} --help")];
-        if let Some(variant) = variants.into_iter().next() {
-            let res = execute_command(&variant);
-            debug!("els {:?}", &res);
-            match res {
-                Ok(output) => return Ok(output), // Возвращаем ЛЮБОЙ вывод, даже если это "ошибка" man/help
-                Err(e) => return Err(e),
-            }
-            /*if let Ok(output) = execute_command(&variant) {
-                if output.len() >= MIN_HELP_LENGTH{
-                    println!("ok {}", &output);
-                    return Ok(output);
-                }else{
-                    println!("err {}", &output);
-                    return Err(output);
-                }
-                
-            }*/
-        }
-        Err(format!("Neither man pages nor help found for  `{cmd}`"))
-    }
-}*/
-
 #[tauri::command]
 async fn ctrl_window(action: &str, app: tauri::AppHandle) -> Result<(), tauri::Error> {
     let window = app.get_webview_window("settings").unwrap();
@@ -140,10 +98,10 @@ async fn request_restart(app: tauri::AppHandle) {
 }
 
 #[tauri::command]
-async fn run_test(cmd: Command) -> String {
-    match run_command(&cmd) {
-        Ok(success) => success,
-        Err(error) => error,
+async fn run_test(cmd: String, sn:bool) -> Result<String, String>  {
+    match run_command(cmd, sn) {
+        Ok(success) => Ok(success),
+        Err(error) => Ok(error),
     }
 }
 
@@ -160,22 +118,20 @@ pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
             // tray menu
-            let settings = MenuItem::with_id(app, "settings", "Settings", true, Some("src-tauri/icons/333.ico"))?;
-            let restart = MenuItem::with_id(app, "restart", "Restart", true, None::<&str>)?;
-            let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+            let settings = MenuItem::with_id(app, "settings", "⚙️   Settings", true, None::<&str>)?;
+            let restart = MenuItem::with_id(app, "restart", "🔃    Restart", true, None::<&str>)?;
+            let quit = MenuItem::with_id(app, "quit", "✝️   Quit", true, None::<&str>)?;
 
             let mut menu_items = Vec::new();
             for cmd in &commands_config.commands {
-                if cmd.active {
-                    let item = MenuItem::with_id(
-                        app,
-                        format!("cmd_{}", cmd.name),
-                        &cmd.name,
-                        true,
-                        None::<&str>,
-                    )?;
-                    menu_items.push(item);
-                }
+                let item = MenuItem::with_id(
+                    app,
+                    format!("cmd_{}", cmd.command),
+                    cmd.icon.clone()+&String::from("    ")+&cmd.command,
+                    true,
+                    None::<&str>,
+                )?;
+                menu_items.push(item);
             }
 
             let mut builder = MenuBuilder::new(app);
@@ -197,11 +153,11 @@ pub fn run() {
                     "restart" => app.restart(),
                     "quit" => app.exit(0),
                     id if id.starts_with("cmd_") => {
-                        let cmd_name = id.replace("cmd_", "");
+                        let cmd_com = id.replace("cmd_", "");
                         if let Some(cmd) =
-                            commands_config.commands.iter().find(|c| c.name == cmd_name)
+                            commands_config.commands.iter().find(|c| c.command == cmd_com)
                         {
-                            let _ = run_command(cmd);
+                            let _ = run_command(cmd_com, cmd.sn);
                         }
                     }
                     _ => {}
@@ -245,40 +201,34 @@ fn open_settings<R: Runtime>(app: &tauri::AppHandle<R>) {
     }
 }
 
-fn run_command(cmd: &Command) -> Result<String, String> {
-    debug!("Executing command: {}", &cmd.name);
-    let result = execute_command(&cmd.name);
+fn run_command(cmd:String, sn:bool) -> Result<String, String> {
+    debug!("Executing command: {}", &cmd);
+    let result = execute_command(&cmd);
 
     let (is_success, message) = match &result {
         Ok(output) => (
             true,
-            format!(
-                "Ok( Command <{}> executed ), Result:\n {}",
-                &cmd.name, &output
-            ),
+            format!("Ok( Command <{}> executed ), Result:\n {}", &cmd, &output),
         ),
         Err(err) => (
             false,
-            format!("Err( executing command <{}> ), Error:\n {}", &cmd.name, &err),
+            format!("Err( Command <{}> failed ), Error:\n {}", &cmd, &err),
         ),
     };
 
     // push to log
     match result {
-        Ok(val) => info!("Command <{}> Result: {}", cmd.name.clone(), val.replace("\n", " ")),
-        Err(err) => error!("Command <{}> Error: {}", cmd.name.clone(), err),
+        Ok(val) => info!("Command <{}> executed, Result: {}", cmd.clone(), val.replace("\n", " ")),
+        Err(err) => error!("Command <{}> failed, Error: {}", cmd.clone(), err),
     }
 
-    if !is_success || cmd.sn {
+    // send notification if fail or enable sn
+    if !is_success || sn {
         let (summary, body) = message.split_at(message.find('\n').unwrap_or(message.len()));
         send_notification(summary, body);
     }
 
-    if is_success {
-        Ok(message)
-    } else {
-        Err(message)
-    }
+    Ok(message)
 }
 
 fn execute_command(command: &str) -> Result<String, String> {

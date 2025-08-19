@@ -2,9 +2,9 @@
 name = "gucli"
 version = "0.1.0"
 description = "linux tray app for run cli commands"
-authors = ["Yuriy Jager Lysov"]
+authors = ["Yuriy (Jager) Lysov"]
 edition = "2024"
-license = "GPL-3.0"
+license = "GPL-3.0+"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -19,7 +19,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2.3", features = [] }
 
 [dependencies]
-tauri = { version = "2.7", features = ["tray-icon", "image-png"] }
+tauri = { version = "2", features = ["tray-icon", "image-png"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 toml = "0.9.2"
