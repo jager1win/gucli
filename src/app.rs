@@ -5,7 +5,7 @@ use serde_wasm_bindgen::{from_value, to_value};
 use wasm_bindgen::prelude::*;
 use chrono::Local;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Command {
     pub id: usize,
     pub command: String,
@@ -63,6 +63,7 @@ extern "C" {
 #[component]
 pub fn App() -> impl IntoView {
     let (active_tab, set_active_tab) = signal(0);
+    let (commands0, set_commands0) = signal(Vec::<Command>::new());
     let (commands, set_commands) = signal(Vec::<Command>::new());
     let (status, set_status) = signal(String::from("Ok( Configuration loaded )"));
     let (ttime, set_ttime) = signal(String::from(""));
@@ -76,7 +77,7 @@ pub fn App() -> impl IntoView {
         let res: Result<Vec<Command>, String> =
             from_value(js_value).map_err(|e| format!("deserialize failed: {e}"));
         match res {
-            Ok(new_commands) => set_commands.set(new_commands),
+            Ok(new_commands) => {set_commands.set(new_commands.clone());set_commands0.set(new_commands);},
             Err(e) => set_status.set(e),
         }
     })};
@@ -94,7 +95,7 @@ pub fn App() -> impl IntoView {
             }
             if !names.insert(cmd.command.clone()) {
                 set_status.set("Err( Field `command` must be unique )".to_string());
-                return;
+                //return;
             }
         }
         // if ok -> save & restart
@@ -140,7 +141,7 @@ pub fn App() -> impl IntoView {
         let mut buf = commands.get();
         buf.push(Command::new(new_id));
         set_commands.update(move |b| *b = buf.clone());
-        set_status.set("Warning( Specify the command and its parameters and test it )".to_string());
+        set_status.set("Warning( Specify the command and its parameters and test it)".to_string());
     };
 
     //+ Delete a command by index (+ auto-save)
@@ -150,7 +151,7 @@ pub fn App() -> impl IntoView {
             buf.remove(index);
             set_commands.update(move |b| *b = buf.clone());
             
-            set_status.set("Warning( After editing the list, save the settings by clicking Save&Restart )".to_string());
+            set_status.set("Warning( After editing the list, save the settings)".to_string());
         }
     };
 
@@ -211,6 +212,7 @@ pub fn App() -> impl IntoView {
             move_up(cmds, current_id);
             *cmds = cmds.to_vec();
         });
+        set_status.set("Ok( Order updated )".to_string());
     };
 
     let move_down = move |current_id: usize| {
@@ -218,15 +220,27 @@ pub fn App() -> impl IntoView {
             move_down(cmds, current_id);
             *cmds = cmds.to_vec();
         });
+        set_status.set("Ok( Order updated )".to_string());
     };
 
     Effect::new(move |_| {
         status.track();
-        commands.track();
         set_ttime.set(Local::now().format("%Y-%m-%d %H:%M:%S.%3f").to_string()); // set new time
         set_highlight.set(true);
         set_timeout(move || set_highlight.set(false), std::time::Duration::from_secs(2));
-        log::debug!("effect save->commands: {:?}", commands.get());
+        //log::debug!("effect save->commands: {:?}", commands.get());
+    });
+
+    Effect::new(move |_| {
+        commands.track();
+        let has_unsaved_changes = commands0.get() != commands.get();
+        let current_status = status.get_untracked();
+        
+        if has_unsaved_changes && !current_status.contains("Unsaved changes") {
+            set_status.set(format!("{} \nUnsaved changes - Save&Restart!", current_status));
+        } else if !has_unsaved_changes && current_status.contains("Unsaved changes") {
+            set_status.set(current_status.replace(" \nUnsaved changes - Save&Restart!", ""));
+        }
     });
 
     view! {
@@ -291,7 +305,7 @@ pub fn App() -> impl IntoView {
                         <span>"count: " {move || commands.get().len()}</span>
                     </div>
                     <div>
-                        <span>{move || ttime.get()}</span>
+                        <span class="ttime">{move || ttime.get()}</span>
                     </div>
                     <div>
                         <span
@@ -332,7 +346,8 @@ pub fn App() -> impl IntoView {
                                     slot.sn = sn.get();
                                 }
                                 set_commands.update(move |b| *b = buf.clone());
-                                log::debug!("save->commands: {:?}", commands.get());
+                                set_status.set(format!("Ok( Command {} `{}` updated )",i.get(),com.get()));
+                                //log::debug!("buf save->commands: {:?}", commands.get());
                             };
                             // When any local signal changes, we push the changes
 
@@ -342,7 +357,7 @@ pub fn App() -> impl IntoView {
                                         <button class="up" on:click=move |_| move_up(i.get())
                                             prop:disabled=move || i.get() == 0
                                         >"↑"</button>
-                                        <span class="warn-text nn">{move || i.get()}</span>
+                                        <span class="nn">{move || i.get()}</span>
                                         <button class="down" on:click=move |_| move_down(i.get())
                                             prop:disabled=move || i.get() == commands.get().len() - 1
                                         >"↓"</button>
@@ -400,7 +415,7 @@ pub fn App() -> impl IntoView {
                             "Add row"
                         </button>
                         <button class="ok-bg" on:click=move |_| save(commands.get())>
-                            "Save & Restart"
+                            "Save&Restart"
                         </button>
                     </div>
                 </div>

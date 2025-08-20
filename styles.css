@@ -2,21 +2,22 @@
   font-family: system-ui, sans-serif;
   font-size: 0.9rem;
 
-  --main-color:oklch(13% .028 261.692);
-  --main-bg-color:oklch(87.2% 0.01 258.338);
-  --warn: oklch(76.9% 0.188 70.08);
+  --mс:oklch(13% .028 261.692);/* gray 950 */
+  --mbc:oklch(92% 0.004 286.32);
+  --warn: oklch(68.1% 0.162 75.834);
   --err: oklch(63.7% 0.237 25.331);
-  --act:var(--g3);
+  --act:var(--g1);
   --gr:oklch(70.7% 0.022 261.325);
   --gr2: oklch(86.9% 0.022 252.894);
   --g1: oklch(37.8% 0.077 168.94);/* emerald 900 green*/
   --g2: oklch(59.6% 0.145 163.225);/* emerald 600 green*/
   --g3: oklch(84.5% 0.143 164.978);/* emerald 300 green*/
+  --mc-2: oklch(44.6% 0.03 256.802);/* gray 600 */
 
 
   height: 100vh;
   box-sizing: border-box;
-  color: var(--main-color);
+  color: var(--mс);
   background-color: transparent;
 
   font-synthesis: none;
@@ -36,7 +37,7 @@ body{margin:0;clip-path: inset(0 round 1rem);overflow: visible;height: 100vh;
   right: 0;
   left: 0;
   z-index: 1000;
-  background-color: var(--main-bg-color);
+  background-color: var(--mbc);
     margin: 0;
     height: 1.4rem;
     display: flex;
@@ -59,10 +60,10 @@ body{margin:0;clip-path: inset(0 round 1rem);overflow: visible;height: 100vh;
 .titlebar-controls button:hover {border: 1px solid var(--act);}
 .titlebar-title{margin-right: 1rem;}
 [data-tauri-drag-region] {cursor: move;}
-.container {margin: 0;padding:0.1rem 1rem 1rem;display: block;overflow-y: auto;background-color: var(--main-bg-color);height: 90vh;
+.container {margin: 0;padding:0.1rem 1rem 1rem;display: block;overflow-y: auto;background-color: var(--mbc);height: 90vh;
 border-radius: 0 0 0.8rem 0.8rem;}
 
-.commands.form > div.row{display: grid;grid-template-columns: 1fr 3fr 2fr 1fr 2fr 2fr; text-align: center;align-items: center;justify-content: center;}
+.commands.form > div.row{display: grid;grid-template-columns: 1fr 3fr 2fr 1fr 2fr 2fr; text-align: center;align-items: center;}
 .commands.form div.chb{display:flex;justify-items: center;justify-content: center;}
 .topline{display:inline-flex; width: 100%;align-items: center; justify-content: space-evenly;height: 3rem;}
 .topline>button{min-width: 9rem;}
@@ -73,14 +74,15 @@ border-radius: 0 0 0.8rem 0.8rem;}
 .status > div:nth-child(2){white-space: wrap;word-wrap:break-word;overflow-wrap:anywhere;}
 .status > div:nth-child(3){overflow: auto;display: flex;overflow: overlay;scrollbar-gutter: stable;}
 .status-block{flex: 1 1 auto;white-space: pre;width: max-content;min-height:3rem;padding: 0 0.4rem;overflow: auto;max-height: 3rem;}
+.ttime{color:var(--mc-2);}
 .iicon input{text-align: center;}
 div.buttons{display: flex; justify-content: space-evenly;}
 div.help{margin: 0;padding: 1rem 0;}
 h5{cursor:default}
 div.order{display: flex;position: relative;justify-content: center;align-items: center;}
-div.order .nn{font-size: 1.4rem;}
-div.order button{background: none;border-width:0.1rem;padding: 0.3rem;}
-div.order button:hover{border-color:var(--g2);color:var(--g2);}
+div.order .nn{font-size: 1.4rem;color: var(--g2);}
+div.order button{background: none;border-width:0.1rem;padding: 0.3rem;box-shadow: none;}
+div.order button:hover{border-color:var(--act);color:var(--act);}
 div.order button:disabled{cursor: not-allowed;opacity: 0.5;}
 div.order button:disabled:hover{border-color:transparent;}
 
@@ -123,7 +125,7 @@ input,button {
   border: 1px solid transparent;
   padding: 0.4rem;
   font-weight: 500;
-  color: var(--main-color);
+  color: var(--mс);
   background-color: var(--gr2);
   transition: border-color 0.25s;
   box-shadow: 0 2px 2px oklch(21% 0.006 285.885);
@@ -139,20 +141,20 @@ button.tabs-header{background-color: transparent;border:none;border-radius:0;bor
 button.tabs-header.active{border-bottom: 2px solid var(--g2);color:var(--g2);font-weight: bold;}
 button:hover,.button:hover {filter: brightness(1.3);}
 button:hover {border-color: var(--act);}
-button:active {background-color: var(--main-bg-color);}
+button:active {background-color: var(--mbc);}
 .man_form{display: flex;justify-content: center;}
 .man_form button{padding: 0 2rem;margin-left: 1rem;}
 .f8{font-size: 0.8rem;border-radius: 0.4rem;margin-bottom: 3rem;}
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --main-color:oklch(96.7% 0.003 264.542);
-    --main-bg-color:oklch(21% 0.006 285.885 / 90%);/*zinc 900*/
+    --mс:oklch(96.7% 0.003 264.542);
+    --mbc:oklch(21% 0.006 285.885 / 90%);/*zinc 900*/
     --warn: oklch(65.2% 0.199 91.936);
     --err: oklch(63.7% 0.237 25.331);
     --act:var(--g3);
     --gr:oklch(0.37 0.013 285.805);
     --gr2:oklch(44.6% 0.03 256.802);
-    color: var(--main-color);
+    --mc-2: oklch(70.7% 0.022 261.325);/* gray 400 */
   }
 }
