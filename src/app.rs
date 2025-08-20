@@ -83,8 +83,8 @@ pub fn App() -> impl IntoView {
     load();
 
     //+ Save (check for uniqueness/non-emptiness of names and, if everything is ok, write it to commands & save to settings.toml)
-    let save = move || {
-        let buf = commands.get();
+    let save = move |buf: Vec<Command>| {
+        //let buf = commands.get();
         // Check "name" - not empty & unique
         let mut names = std::collections::HashSet::new();
         for cmd in &buf {
@@ -111,6 +111,7 @@ pub fn App() -> impl IntoView {
             }
             let _ = invoke("request_restart", JsValue::NULL).await;
         });
+        //load();
     };
 
     //+ reset settings.toml to default
@@ -135,8 +136,9 @@ pub fn App() -> impl IntoView {
 
     //+ Add a new row with default values
     let add_command = move || {
+        let new_id = commands.get().len();
         let mut buf = commands.get();
-        buf.push(Command::new(66));
+        buf.push(Command::new(new_id));
         set_commands.update(move |b| *b = buf.clone());
         set_status.set("Warning( Specify the command and its parameters and test it )".to_string());
     };
@@ -204,11 +206,27 @@ pub fn App() -> impl IntoView {
         });
     };
 
+    let move_up = move |current_id: usize| {
+        set_commands.update(|cmds| {
+            move_up(cmds, current_id);
+            *cmds = cmds.to_vec();
+        });
+    };
+
+    let move_down = move |current_id: usize| {
+        set_commands.update(|cmds| {
+            move_down(cmds, current_id);
+            *cmds = cmds.to_vec();
+        });
+    };
+
     Effect::new(move |_| {
-        status.track(); // Tracking status changes
+        status.track();
+        commands.track();
         set_ttime.set(Local::now().format("%Y-%m-%d %H:%M:%S.%3f").to_string()); // set new time
         set_highlight.set(true);
         set_timeout(move || set_highlight.set(false), std::time::Duration::from_secs(2));
+        log::debug!("effect save->commands: {:?}", commands.get());
     });
 
     view! {
@@ -278,6 +296,7 @@ pub fn App() -> impl IntoView {
                     <div>
                         <span
                             class="status-block"
+                            class:ok-text=move || status.get().starts_with("Ok")
                             class:err-text=move || status.get().starts_with("Er")
                             class:warn-text=move || status.get().starts_with("Warn")
                             class:highlight=move || highlight.get()
@@ -290,6 +309,7 @@ pub fn App() -> impl IntoView {
 
                 <div class="commands form">
                     <div class="row head">
+                        <span>"#"</span>
                         <span>"command"</span>
                         <span>"icon"</span>
                         <span>"sn"</span>
@@ -299,7 +319,7 @@ pub fn App() -> impl IntoView {
 
                     <ForEnumerate
                         each=move || commands.get()
-                        key=|command| command.id
+                        key=|command| command.id.to_string() + &command.command
                         children={move |i: ReadSignal<usize>, command: Command| {
                             let (com, set_com) = signal(command.command.clone());
                             let (icon, set_icon) = signal(command.icon);
@@ -315,8 +335,18 @@ pub fn App() -> impl IntoView {
                                 log::debug!("save->commands: {:?}", commands.get());
                             };
                             // When any local signal changes, we push the changes
+
                             view! {
                                 <div class="row">
+                                    <div class="order">
+                                        <button class="up" on:click=move |_| move_up(i.get())
+                                            prop:disabled=move || i.get() == 0
+                                        >"↑"</button>
+                                        <span class="warn-text nn">{move || i.get()}</span>
+                                        <button class="down" on:click=move |_| move_down(i.get())
+                                            prop:disabled=move || i.get() == commands.get().len() - 1
+                                        >"↓"</button>
+                                    </div>
                                     <input
                                         type="text"
                                         placeholder="Danger zone! Verify commands before adding..."
@@ -326,11 +356,12 @@ pub fn App() -> impl IntoView {
                                             sync_to_buffer();
                                         }
                                     />
-                                    <div class="chb">
+                                    <div class="iicon">
                                         <input
                                             type="text"
-                                            size=10
-                                            checked=move || icon.get()
+                                            size="8"
+                                            maxlength="8"
+                                            value=move || icon.get()
                                             on:change=move |ev| {
                                                 set_icon.set(event_target_value(&ev));
                                                 sync_to_buffer();
@@ -368,7 +399,7 @@ pub fn App() -> impl IntoView {
                         <button class="ok-bg" on:click=move |_| add_command()>
                             "Add row"
                         </button>
-                        <button class="ok-bg" on:click=move |_| save()>
+                        <button class="ok-bg" on:click=move |_| save(commands.get())>
                             "Save & Restart"
                         </button>
                     </div>
@@ -523,5 +554,24 @@ pub fn Help() -> impl IntoView {
                 </li>
             </ul>
         </div>
+    }
+}
+
+/// Функции перемещения
+fn move_up(commands: &mut [Command], id: usize) {
+    if id > 0 {
+        commands.swap(id, id - 1);
+        for (new_id, cmd) in commands.iter_mut().enumerate() {
+            cmd.id = new_id;
+        }
+    }
+}
+
+fn move_down(commands: &mut [Command], id: usize) {
+    if id < commands.len() - 1 {
+        commands.swap(id, id + 1);
+        for (new_id, cmd) in commands.iter_mut().enumerate() {
+            cmd.id = new_id;
+        }
     }
 }

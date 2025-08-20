@@ -62,7 +62,7 @@ body{margin:0;clip-path: inset(0 round 1rem);overflow: visible;height: 100vh;
 .container {margin: 0;padding:0.1rem 1rem 1rem;display: block;overflow-y: auto;background-color: var(--main-bg-color);height: 90vh;
 border-radius: 0 0 0.8rem 0.8rem;}
 
-.commands.form > div.row{display: grid;grid-template-columns: 2fr 1fr 1fr 1fr 1fr; text-align: center;align-items: center;justify-content: center;}
+.commands.form > div.row{display: grid;grid-template-columns: 1fr 3fr 2fr 1fr 2fr 2fr; text-align: center;align-items: center;justify-content: center;}
 .commands.form div.chb{display:flex;justify-items: center;justify-content: center;}
 .topline{display:inline-flex; width: 100%;align-items: center; justify-content: space-evenly;height: 3rem;}
 .topline>button{min-width: 9rem;}
@@ -73,9 +73,16 @@ border-radius: 0 0 0.8rem 0.8rem;}
 .status > div:nth-child(2){white-space: wrap;word-wrap:break-word;overflow-wrap:anywhere;}
 .status > div:nth-child(3){overflow: auto;display: flex;overflow: overlay;scrollbar-gutter: stable;}
 .status-block{flex: 1 1 auto;white-space: pre;width: max-content;min-height:3rem;padding: 0 0.4rem;overflow: auto;max-height: 3rem;}
+.iicon input{text-align: center;}
 div.buttons{display: flex; justify-content: space-evenly;}
 div.help{margin: 0;padding: 1rem 0;}
 h5{cursor:default}
+div.order{display: flex;position: relative;justify-content: center;align-items: center;}
+div.order .nn{font-size: 1.4rem;}
+div.order button{background: none;border-width:0.1rem;padding: 0.3rem;}
+div.order button:hover{border-color:var(--g2);color:var(--g2);}
+div.order button:disabled{cursor: not-allowed;opacity: 0.5;}
+div.order button:disabled:hover{border-color:transparent;}
 
 .ok-text{color: var(--g2);}
 .err-text{color: var(--err);}
@@ -123,7 +130,8 @@ input,button {
   outline: none;
 }
 
-input, button [type="checkbox"]{cursor: pointer;}
+input{cursor: text;}
+button, input[type="checkbox"]{cursor: pointer;}
 
 .text-bg{background-color: var(--gr);border-radius: 0.4rem;}
 

@@ -120,7 +120,7 @@ pub fn run() {
         .setup(|app| {
             // tray menu
             let settings = MenuItem::with_id(app, "settings", "⚙️   Settings", true, None::<&str>)?;
-            let restart = MenuItem::with_id(app, "restart", "🔃    Restart", true, None::<&str>)?;
+            let restart = MenuItem::with_id(app, "restart", "🔃   Restart", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "✝️   Quit", true, None::<&str>)?;
 
             let mut menu_items = Vec::new();
