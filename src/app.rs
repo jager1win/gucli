@@ -65,7 +65,7 @@ pub fn App() -> impl IntoView {
     let (active_tab, set_active_tab) = signal(0);
     let (commands0, set_commands0) = signal(Vec::<Command>::new());
     let (commands, set_commands) = signal(Vec::<Command>::new());
-    let (status, set_status) = signal(String::from("Ok( Configuration loaded )"));
+    let (status, set_status) = signal(String::from(""));
     let (ttime, set_ttime) = signal(String::from(""));
     let (highlight, set_highlight) = signal(false);
     let (autostart, set_autostart) = signal(false);
@@ -76,6 +76,7 @@ pub fn App() -> impl IntoView {
         let js_value = invoke_without_args("get_commands").await;
         let res: Result<Vec<Command>, String> =
             from_value(js_value).map_err(|e| format!("deserialize failed: {e}"));
+        log::debug!("load: {:?}", &res);
         match res {
             Ok(new_commands) => {set_commands.set(new_commands.clone());set_commands0.set(new_commands);},
             Err(e) => set_status.set(e),
@@ -85,7 +86,6 @@ pub fn App() -> impl IntoView {
 
     //+ Save (check for uniqueness/non-emptiness of names and, if everything is ok, write it to commands & save to settings.toml)
     let save = move |buf: Vec<Command>| {
-        //let buf = commands.get();
         // Check "name" - not empty & unique
         let mut names = std::collections::HashSet::new();
         for cmd in &buf {
@@ -95,7 +95,7 @@ pub fn App() -> impl IntoView {
             }
             if !names.insert(cmd.command.clone()) {
                 set_status.set("Err( Field `command` must be unique )".to_string());
-                //return;
+                return;
             }
         }
         // if ok -> save & restart
@@ -112,7 +112,6 @@ pub fn App() -> impl IntoView {
             }
             let _ = invoke("request_restart", JsValue::NULL).await;
         });
-        //load();
     };
 
     //+ reset settings.toml to default
@@ -141,7 +140,7 @@ pub fn App() -> impl IntoView {
         let mut buf = commands.get();
         buf.push(Command::new(new_id));
         set_commands.update(move |b| *b = buf.clone());
-        set_status.set("Warning( Specify the command and its parameters and test it)".to_string());
+        set_status.set("Warning( Specify the command and its parameters and test it )".to_string());
     };
 
     //+ Delete a command by index (+ auto-save)
@@ -150,8 +149,7 @@ pub fn App() -> impl IntoView {
         if index < buf.len() {
             buf.remove(index);
             set_commands.update(move |b| *b = buf.clone());
-            
-            set_status.set("Warning( After editing the list, save the settings)".to_string());
+            set_status.set("Warning( After editing the list, save the settings )".to_string());
         }
     };
 
@@ -177,6 +175,15 @@ pub fn App() -> impl IntoView {
         if ctrl == "max0"{
             set_is_maximized.set("max1");
         }else {set_is_maximized.set("max0");}
+        
+        if ctrl == "close" {
+            let has_unsaved_changes = commands0.get() != commands.get();
+            let warn = "Warning( Are there unsaved changes, Really reset? )".to_string();
+            if has_unsaved_changes && !status.get().starts_with(&warn) {
+                set_status.set(warn);
+                return;
+            };
+        }
 
         spawn_local(async move {
             let args = to_value(&CtrlWindow { action: ctrl }).unwrap();
@@ -198,7 +205,7 @@ pub fn App() -> impl IntoView {
 
     let toggle_autostart = move || {
         spawn_local(async move {
-            // Проверяем текущий статус
+            // Check current status for autostart
             let status_js = invoke_without_args("autostart_enable").await;
             let _current_status = from_value::<Result<String, String>>(status_js)
                 .unwrap_or(Err("Err( Autostart status unknown )".to_string()));
@@ -225,10 +232,10 @@ pub fn App() -> impl IntoView {
 
     Effect::new(move |_| {
         status.track();
-        set_ttime.set(Local::now().format("%Y-%m-%d %H:%M:%S.%3f").to_string()); // set new time
+        set_ttime.set(Local::now().format("%Y-%m-%d %H:%M:%S.%3f").to_string());
         set_highlight.set(true);
         set_timeout(move || set_highlight.set(false), std::time::Duration::from_secs(2));
-        //log::debug!("effect save->commands: {:?}", commands.get());
+        log::debug!("effect save->commands: {:?}", commands.get());
     });
 
     Effect::new(move |_| {
@@ -237,9 +244,7 @@ pub fn App() -> impl IntoView {
         let current_status = status.get_untracked();
         
         if has_unsaved_changes && !current_status.contains("Unsaved changes") {
-            set_status.set(format!("{} \nUnsaved changes - Save&Restart!", current_status));
-        } else if !has_unsaved_changes && current_status.contains("Unsaved changes") {
-            set_status.set(current_status.replace(" \nUnsaved changes - Save&Restart!", ""));
+            set_status.set(format!("{} \nUnsaved changes - Save & Restart!", current_status));
         }
     });
 
@@ -415,7 +420,7 @@ pub fn App() -> impl IntoView {
                             "Add row"
                         </button>
                         <button class="ok-bg" on:click=move |_| save(commands.get())>
-                            "Save&Restart"
+                            "Save & Restart"
                         </button>
                     </div>
                 </div>

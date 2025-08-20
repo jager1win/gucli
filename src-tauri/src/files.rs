@@ -82,6 +82,14 @@ impl Write for LineLimitedFile {
         Ok(())
     }
 }
+
+/// return linux home dir
+pub fn get_home_dir() -> Result<PathBuf, String> {
+    std::env::var("HOME")
+        .map(PathBuf::from)
+        .map_err(|_| "Failed to get $HOME".to_string())
+}
+
 /// return full path COMMANDS_FILE
 pub fn full_path_commands() -> PathBuf {
     get_home_dir().expect("Home dir not found").join(COMMANDS_FILE)
@@ -137,7 +145,6 @@ pub fn load_commands() -> Result<crate::AppCommandsConfig, Box<dyn std::error::E
 }
 /// write commands.toml + remove id
 pub fn save_commands(config: &crate::AppCommandsConfig) -> Result<(), Box<dyn std::error::Error>> {
-    // Преобразуем обратно в TOML формат (без ID)
     let toml_commands: Vec<TomlCommand> = config.commands
         .iter()
         .map(|cmd| TomlCommand {
@@ -150,11 +157,4 @@ pub fn save_commands(config: &crate::AppCommandsConfig) -> Result<(), Box<dyn st
     let toml_config = CommandsConfig { commands: toml_commands };
     let _ = fs::write(full_path_commands(), toml::to_string(&toml_config)?);
     Ok(())
-}
-
-/// return linux home dir
-pub fn get_home_dir() -> Result<PathBuf, String> {
-    std::env::var("HOME")
-        .map(PathBuf::from)
-        .map_err(|_| "Failed to get $HOME".to_string())
 }
