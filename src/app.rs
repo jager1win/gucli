@@ -214,7 +214,7 @@ pub fn App() -> impl IntoView {
         });
     };
 
-    let move_up = move |current_id: usize| {
+    /*let move_up = move |current_id: usize| {
         set_commands.update(|cmds| {
             move_up(cmds, current_id);
             *cmds = cmds.to_vec();
@@ -228,6 +228,28 @@ pub fn App() -> impl IntoView {
             *cmds = cmds.to_vec();
         });
         set_status.set("Ok( Order updated )".to_string());
+    };*/
+    let move_command = {
+        fn move_by(commands: &mut [Command], id: usize, dir: isize) {
+            if commands.is_empty() { return; }
+            let len = commands.len() as isize;
+            let pos = id as isize;
+            let new_pos = pos + dir;
+            if new_pos >= 0 && new_pos < len {
+                commands.swap(pos as usize, new_pos as usize);
+                for (new_id, cmd) in commands.iter_mut().enumerate() {
+                    cmd.id = new_id;
+                }
+            }
+        }
+
+        move |up: bool, current_id: usize| {
+            set_commands.update(|cmds| {
+                let dir = if up { -1 } else { 1 };
+                move_by(cmds, current_id, dir);
+            });
+            set_status.set("Ok( Order updated )".to_string());
+        }
     };
 
     Effect::new(move |_| {
@@ -359,11 +381,11 @@ pub fn App() -> impl IntoView {
                             view! {
                                 <div class="row">
                                     <div class="order">
-                                        <button class="up" on:click=move |_| move_up(i.get())
+                                        <button class="up" on:click=move |_| move_command(true,i.get())
                                             prop:disabled=move || i.get() == 0
                                         >"↑"</button>
                                         <span class="nn">{move || i.get()}</span>
-                                        <button class="down" on:click=move |_| move_down(i.get())
+                                        <button class="down" on:click=move |_| move_command(false,i.get())
                                             prop:disabled=move || i.get() == commands.get().len() - 1
                                         >"↓"</button>
                                     </div>
@@ -577,7 +599,7 @@ pub fn Help() -> impl IntoView {
     }
 }
 
-/// Функции перемещения
+/*
 fn move_up(commands: &mut [Command], id: usize) {
     if id > 0 {
         commands.swap(id, id - 1);
@@ -594,4 +616,4 @@ fn move_down(commands: &mut [Command], id: usize) {
             cmd.id = new_id;
         }
     }
-}
+}*/

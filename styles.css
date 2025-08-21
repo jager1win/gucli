@@ -3,7 +3,7 @@
   font-size: 0.9rem;
 
   --mс:oklch(13% .028 261.692);/* gray 950 */
-  --mbc:oklch(92% 0.004 286.32);
+  --mbc:oklch(92% 0.004 286.32 / 90%);
   --warn: oklch(68.1% 0.162 75.834);
   --err: oklch(63.7% 0.237 25.331);
   --act:var(--g1);
@@ -67,7 +67,7 @@ border-radius: 0 0 0.8rem 0.8rem;}
 .commands.form div.chb{display:flex;justify-items: center;justify-content: center;}
 .topline{display:inline-flex; width: 100%;align-items: center; justify-content: space-evenly;height: 3rem;}
 .topline>button{min-width: 9rem;}
-.status{border-top: 1px solid darkgray;border-bottom: 1px solid darkgray;display:grid;grid-template-columns: 1fr 1fr 6fr;
+.status{border-top: 1px solid var(--mc-2);border-bottom: 1px solid var(--mc-2);display:grid;grid-template-columns: 1fr 1fr 6fr;
   min-height: 3.6rem;align-items: center; grid-template-rows: auto;padding: 0.2rem 0.4rem;overflow: scroll;}
 .status > div:nth-child(1){white-space: nowrap;}
 .status > div:nth-child(1) > *{margin:0.6rem 0 0.6rem 0; font-weight: 700;}
@@ -76,7 +76,7 @@ border-radius: 0 0 0.8rem 0.8rem;}
 .status-block{flex: 1 1 auto;white-space: pre;width: max-content;min-height:3rem;padding: 0 0.4rem;overflow: auto;max-height: 3rem;}
 .ttime{color:var(--mc-2);}
 .iicon input{text-align: center;}
-div.buttons{display: flex; justify-content: space-evenly;}
+div.buttons{display: flex; justify-content: space-evenly;border-top: 1px solid var(--mc-2);padding-top:0.6rem;margin-top:0.8rem;}
 div.help{margin: 0;padding: 1rem 0;}
 h5{cursor:default}
 div.order{display: flex;position: relative;justify-content: center;align-items: center;}
