@@ -181,11 +181,11 @@ pub fn run() {
 }
 
 fn open_settings<R: Runtime>(app: &tauri::AppHandle<R>) {
-    // Закрываем окно, если оно открыто
+    // Closing the window if it is open
     if let Some(window) = app.get_webview_window("settings") {
         window.close().unwrap();
     } else {
-        // Создаём новое окно
+        // Creating a new window
         let _window =
             tauri::WebviewWindowBuilder::new(app, "settings", tauri::WebviewUrl::App("/".into()))
                 .title("Settings")
@@ -234,6 +234,7 @@ fn execute_command(command: &str) -> Result<String, String> {
     let output = stdcom::new("sh")
         .arg("-c")
         .arg(command)
+        .arg("&")
         .output()
         .map_err(|e| e.to_string())?;
 

@@ -2,8 +2,8 @@
   font-family: system-ui, sans-serif;
   font-size: 0.9rem;
 
-  --mс:oklch(13% .028 261.692);/* gray 950 */
-  --mbc:oklch(92% 0.004 286.32 / 90%);
+  --mc:oklch(13% .028 261.692);/* gray 950 */
+  --mbc:oklch(87.2% 0.01 258.338 / 90%);
   --warn: oklch(68.1% 0.162 75.834);
   --err: oklch(63.7% 0.237 25.331);
   --act:var(--g1);
@@ -17,7 +17,7 @@
 
   height: 100vh;
   box-sizing: border-box;
-  color: var(--mс);
+  color: var(--mc);
   background-color: transparent;
 
   font-synthesis: none;
@@ -125,7 +125,7 @@ input,button {
   border: 1px solid transparent;
   padding: 0.4rem;
   font-weight: 500;
-  color: var(--mс);
+  color: var(--mc);
   background-color: var(--gr2);
   transition: border-color 0.25s;
   box-shadow: 0 2px 2px oklch(21% 0.006 285.885);
@@ -148,7 +148,7 @@ button:active {background-color: var(--mbc);}
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --mс:oklch(96.7% 0.003 264.542);
+    --mc:oklch(96.7% 0.003 264.542);
     --mbc:oklch(21% 0.006 285.885 / 90%);/*zinc 900*/
     --warn: oklch(65.2% 0.199 91.936);
     --err: oklch(63.7% 0.237 25.331);

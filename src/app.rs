@@ -72,7 +72,7 @@ pub fn App() -> impl IntoView {
     let (is_maximized, set_is_maximized) = signal("max0");
     let (reset, set_reset) = signal(false);
     //+ init commands on open window
-    let load = move || {spawn_local(async move {
+    let init = move || {spawn_local(async move {
         let js_value = invoke_without_args("get_commands").await;
         let res: Result<Vec<Command>, String> =
             from_value(js_value).map_err(|e| format!("deserialize failed: {e}"));
@@ -82,7 +82,7 @@ pub fn App() -> impl IntoView {
             Err(e) => set_status.set(e),
         }
     })};
-    load();
+    init();
 
     //+ Save (check for uniqueness/non-emptiness of names and, if everything is ok, write it to commands & save to settings.toml)
     let save = move |buf: Vec<Command>| {
@@ -214,21 +214,7 @@ pub fn App() -> impl IntoView {
         });
     };
 
-    /*let move_up = move |current_id: usize| {
-        set_commands.update(|cmds| {
-            move_up(cmds, current_id);
-            *cmds = cmds.to_vec();
-        });
-        set_status.set("Ok( Order updated )".to_string());
-    };
-
-    let move_down = move |current_id: usize| {
-        set_commands.update(|cmds| {
-            move_down(cmds, current_id);
-            *cmds = cmds.to_vec();
-        });
-        set_status.set("Ok( Order updated )".to_string());
-    };*/
+    //+ move command in vec - up & down id
     let move_command = {
         fn move_by(commands: &mut [Command], id: usize, dir: isize) {
             if commands.is_empty() { return; }
@@ -252,6 +238,7 @@ pub fn App() -> impl IntoView {
         }
     };
 
+    //monitored status changes update the time of the last operation
     Effect::new(move |_| {
         status.track();
         set_ttime.set(Local::now().format("%Y-%m-%d %H:%M:%S.%3f").to_string());
@@ -260,6 +247,7 @@ pub fn App() -> impl IntoView {
         log::debug!("effect save->commands: {:?}", commands.get());
     });
 
+    // adds a line about unsaved changes to the status
     Effect::new(move |_| {
         commands.track();
         let has_unsaved_changes = commands0.get() != commands.get();
@@ -374,7 +362,7 @@ pub fn App() -> impl IntoView {
                                 }
                                 set_commands.update(move |b| *b = buf.clone());
                                 set_status.set(format!("Ok( Command {} `{}` updated )",i.get(),com.get()));
-                                //log::debug!("buf save->commands: {:?}", commands.get());
+                                log::debug!("buf save->commands: {:?}", commands.get());
                             };
                             // When any local signal changes, we push the changes
 
@@ -598,22 +586,3 @@ pub fn Help() -> impl IntoView {
         </div>
     }
 }
-
-/*
-fn move_up(commands: &mut [Command], id: usize) {
-    if id > 0 {
-        commands.swap(id, id - 1);
-        for (new_id, cmd) in commands.iter_mut().enumerate() {
-            cmd.id = new_id;
-        }
-    }
-}
-
-fn move_down(commands: &mut [Command], id: usize) {
-    if id < commands.len() - 1 {
-        commands.swap(id, id + 1);
-        for (new_id, cmd) in commands.iter_mut().enumerate() {
-            cmd.id = new_id;
-        }
-    }
-}*/

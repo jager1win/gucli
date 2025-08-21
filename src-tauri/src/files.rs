@@ -7,7 +7,7 @@ use tracing_subscriber::fmt::writer::MakeWriter;
 pub const COMMANDS_FILE: &str = ".config/gucli/commands.toml";
 pub const LOG_FILE: &str = ".config/gucli/gucli.log";
 
-// Структура для TOML (без ID)
+// Structure for TOML (without ID)
 #[derive(Serialize, Deserialize)]
 pub struct TomlCommand {
     pub command: String,
@@ -15,7 +15,7 @@ pub struct TomlCommand {
     pub sn: bool,
 }
 
-// Конфигурация для TOML
+// Configuration for TOML
 #[derive(Serialize, Deserialize)]
 pub struct CommandsConfig {
     #[serde(rename = "commands")]
@@ -53,20 +53,20 @@ impl Write for LineLimitedFile {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         let message = String::from_utf8_lossy(buf).trim().to_string();
 
-        // Читаем текущее содержимое файла
+        // read content
         let mut content = if self.path.exists() {
             fs::read_to_string(&self.path)?
         } else {
             String::new()
         };
 
-        // Добавляем новую запись с переносом строки
+        // Adding a new entry with a line break
         if !content.is_empty() {
             content.push('\n');
         }
         content.push_str(&message);
 
-        // Обрезаем до max_lines
+        // Truncating to max_lines
         let lines: Vec<&str> = content.lines().collect();
         let truncated = if lines.len() > self.max_lines {
             lines[lines.len() - self.max_lines..].join("\n")
