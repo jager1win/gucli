@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::{fs, env, process::Command as stdcom};
+use std::{fs, env, process::Command};
 use tauri::{
     Manager, Runtime,
     menu::{MenuBuilder, MenuItem},
@@ -10,7 +10,7 @@ pub mod files;
 use crate::files::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Command {
+pub struct UserCommand {
     pub id: usize,
     pub command: String,
     pub icon: String,
@@ -19,7 +19,7 @@ pub struct Command {
 
 #[derive(Default, Debug, Serialize, Deserialize)]
 pub struct AppCommandsConfig {
-    pub commands: Vec<Command>,
+    pub commands: Vec<UserCommand>,
 }
 
 #[tauri::command]
@@ -75,13 +75,13 @@ async fn ctrl_window(action: &str, app: tauri::AppHandle) -> Result<(), tauri::E
 }
 
 #[tauri::command]
-async fn get_commands() -> Result<Vec<Command>, String> {
+async fn get_commands() -> Result<Vec<UserCommand>, String> {
     let config = load_commands().map_err(|e| e.to_string())?;
     Ok(config.commands)
 }
 
 #[tauri::command]
-async fn set_commands(commands: Vec<Command>) -> Result<String, String> {
+async fn set_commands(commands: Vec<UserCommand>) -> Result<String, String> {
     let config = AppCommandsConfig { commands };
     save_commands(&config).map_err(|e| e.to_string())?;
     Ok("Commands saved".to_string())
@@ -99,7 +99,7 @@ async fn request_restart(app: tauri::AppHandle) {
 }
 
 #[tauri::command]
-async fn run_test(cmd: Command) -> Result<String, String>  {
+async fn run_test(cmd: UserCommand) -> Result<String, String>  {
     match run_command(cmd.command, cmd.sn) {
         Ok(success) => Ok(success),
         Err(error) => Ok(error),
@@ -231,10 +231,9 @@ fn run_command(cmd:String, sn:bool) -> Result<String, String> {
 }
 
 fn execute_command(command: &str) -> Result<String, String> {
-    let output = stdcom::new("sh")
+    let output = Command::new("sh")
         .arg("-c")
         .arg(command)
-        .arg("&")
         .output()
         .map_err(|e| e.to_string())?;
 
@@ -248,8 +247,8 @@ fn execute_command(command: &str) -> Result<String, String> {
 }
 
 fn send_notification(summary: &str, body: &str) {
-    if stdcom::new("notify-send").arg("--version").output().is_ok() {
-        let _ = stdcom::new("notify-send")
+    if Command::new("notify-send").arg("--version").output().is_ok() {
+        let _ = Command::new("notify-send")
             .arg(summary)
             .arg(body)
             .arg("--app-name=gucli-tray")

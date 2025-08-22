@@ -3,6 +3,8 @@ use std::io::{self, Write};
 use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 use tracing_subscriber::fmt::writer::MakeWriter;
+use std::collections::HashSet;
+use tracing::{error};
 
 pub const COMMANDS_FILE: &str = ".config/gucli/commands.toml";
 pub const LOG_FILE: &str = ".config/gucli/gucli.log";
@@ -104,11 +106,12 @@ pub fn full_path_log() -> PathBuf {
 pub fn set_config(reset: Option<bool>) -> io::Result<String> {
     let reset = reset.unwrap_or(false);
     let commands_path = full_path_commands();
+    let example_commands = get_home_dir().expect("Home dir not found").join(".config/gucli/example.commands.toml");
 
     if !commands_path.exists() || reset {
         fs::create_dir_all(commands_path.parent().unwrap())?;
 
-        let default_config = r#"# params: command=string(with args), active=bool(default true), sn=bool(default=true)
+        let default_config = r#"# params: command=string(with args), icon=string(<= 8 chars), sn=bool(default=true)
 [[commands]]
 command = "hostname -A"
 icon = "😀"
@@ -116,9 +119,10 @@ sn = true
 
 [[commands]]
 command = "id"
-icon = "⤁"
+icon = "🚀"
 sn = true"#;
         fs::write(&commands_path, default_config.trim())?;
+        fs::write(&example_commands, default_config.trim())?;
         Ok("File commands.toml created".to_string())
     } else {
         Ok("File commands.toml exists".to_string())
@@ -130,10 +134,32 @@ pub fn load_commands() -> Result<crate::AppCommandsConfig, Box<dyn std::error::E
     let content = fs::read_to_string(full_path_commands())?;
     let toml_config: CommandsConfig = toml::from_str(&content)?;
     
+    let mut unique_commands = HashSet::new();
+    
+    for (index, cmd) in toml_config.commands.iter().enumerate() {
+        // check empty command
+        if cmd.command.trim().is_empty() {
+            error!("Command at index {} is empty", index);
+            return Err("Command cannot be empty".into());
+        }
+
+        // check unique command
+        if !unique_commands.insert(&cmd.command) {
+            error!("Command '{}' at index {} is not unique", cmd.command, index);
+            return Err("Command is not unique".into());
+        }
+        
+        // check len icon (<= 8 char))
+        if cmd.icon.chars().count() > 8 {
+            error!("Icon '{}' at index {} exceeds 8 characters limit", cmd.icon, index);
+            return Err("Icon exceeds 8 characters limit".into());
+        }
+    }
+    
     let commands_with_id = toml_config.commands
         .into_iter()
         .enumerate()
-        .map(|(id, toml_cmd)| crate::Command {
+        .map(|(id, toml_cmd)| crate::UserCommand {
             id,
             command: toml_cmd.command,
             icon: toml_cmd.icon,
@@ -143,6 +169,7 @@ pub fn load_commands() -> Result<crate::AppCommandsConfig, Box<dyn std::error::E
     
     Ok(crate::AppCommandsConfig { commands: commands_with_id })
 }
+
 /// write commands.toml + remove id
 pub fn save_commands(config: &crate::AppCommandsConfig) -> Result<(), Box<dyn std::error::Error>> {
     let toml_commands: Vec<TomlCommand> = config.commands

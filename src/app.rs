@@ -84,7 +84,7 @@ pub fn App() -> impl IntoView {
     })};
     init();
 
-    //+ Save (check for uniqueness/non-emptiness of names and, if everything is ok, write it to commands & save to settings.toml)
+    //+ Save (check for uniqueness/non-emptiness of names and, if everything is ok, write it to commands & save to commands.toml)
     let save = move |buf: Vec<Command>| {
         // Check "name" - not empty & unique
         let mut names = std::collections::HashSet::new();
@@ -114,7 +114,7 @@ pub fn App() -> impl IntoView {
         });
     };
 
-    //+ reset settings.toml to default
+    //+ reset commands.toml to default
     let reset_commands = move || {
         if !reset.get(){
             set_reset.set(true);
@@ -178,7 +178,7 @@ pub fn App() -> impl IntoView {
         
         if ctrl == "close" {
             let has_unsaved_changes = commands0.get() != commands.get();
-            let warn = "Warning( Are there unsaved changes, Really reset? )".to_string();
+            let warn = "Warning( Are there unsaved changes, really quit? )".to_string();
             if has_unsaved_changes && !status.get().starts_with(&warn) {
                 set_status.set(warn);
                 return;
@@ -273,7 +273,7 @@ pub fn App() -> impl IntoView {
                 class="tabs-header"
                 on:click=move |_| set_active_tab.set(1)
             >
-                "Man pages"
+                "Man pages & --help"
             </button>
             <button
                 class:active=move || active_tab.get() == 2
@@ -513,7 +513,7 @@ pub fn Help() -> impl IntoView {
                 <li>
                     <b class="stt">"Config file"</b>
                     " is located at "
-                    <b class="stt">"`/home/$USER/.config/gucli/settings.toml`"</b>
+                    <b class="stt">"`/home/$USER/.config/gucli/commands.toml`"</b>
                     <br />
                     "Default settings (after install or `Reset to default`) look like:"
                     <br />
@@ -530,7 +530,7 @@ pub fn Help() -> impl IntoView {
                     <br />
                     "After manual editing, restart the application."
                     <br />
-                    "You can add command: `xdg-open /home/$USER/.config/gucli/settings.toml`"
+                    "You can add command: `xdg-open /home/$USER/.config/gucli/commands.toml`"
                     <br />
                     "& replace `xdg-open` with your preferred text editor"
                 </li>
