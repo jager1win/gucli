@@ -282,6 +282,7 @@ pub fn App() -> impl IntoView {
             >
                 "Help"
             </button>
+            <ThemeToggle />
 
             <div class="titlebar-controls">
                 <button on:click=move |_| ctrl_window("min") id="titlebar-minimize">
@@ -584,5 +585,68 @@ pub fn Help() -> impl IntoView {
                 </li>
             </ul>
         </div>
+    }
+}
+
+#[component]
+pub fn ThemeToggle() -> impl IntoView {
+    use web_sys::window;
+    // 0. init
+    let mut initial_theme = "light".to_string();
+
+    // 1. get value from localStorage 
+    let local_storage_theme: Option<String> = window()
+        .and_then(|w| w.local_storage().ok())
+        .and_then(|s| s?.get("theme").expect(""));
+
+    // 2. get system theme IF localStorage None or empty
+    let prefer = match local_storage_theme.as_deref() {
+        Some(theme) if !theme.is_empty() => None,
+        _ => {
+            window()
+                .and_then(|w| w.match_media("(prefers-color-scheme: dark)").ok())
+                .map(|mql| if mql.expect("").matches() { "dark" } else { "light" })
+        }
+    };
+
+    // 3. set theme
+    if let Some(theme) = local_storage_theme {
+        if !theme.is_empty() {
+            initial_theme = theme;
+        }
+    } else if let Some(pref) = prefer {
+        initial_theme = pref.to_string();
+    }
+
+    let (theme, set_theme) = signal(initial_theme);
+
+    Effect::new(move |_| {
+        if let Some(window) = window() {
+            if let Some(html_el) = window.document().and_then(|d| d.document_element()) {
+                let _ = if theme.get() == "dark" {
+                    html_el.set_attribute("data-theme", "dark")
+                } else {
+                    html_el.set_attribute("data-theme", "light")
+                };
+            }
+
+            if let Ok(Some(storage)) = window.local_storage() {
+                let _ = storage.set("theme", &theme.get());
+            }
+        }
+    });
+
+    view! {
+        <button
+            on:click=move |_| {
+                set_theme.update(|t| {
+                    *t = if *t == "light" { "dark".into() } else { "light".into() };
+                });
+            }
+            class="theme-switcher"
+            aria-label="Toggle theme"
+        >
+            {move || if theme.get() == "light" { "🌙" } else { "🌞" }}
+        </button>
     }
 }

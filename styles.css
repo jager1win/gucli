@@ -139,6 +139,7 @@ button, input[type="checkbox"]{cursor: pointer;}
 
 button.tabs-header{background-color: transparent;border:none;border-radius:0;border-bottom: 2px solid transparent;box-shadow: unset;}
 button.tabs-header.active{border-bottom: 2px solid var(--g2);color:var(--g2);font-weight: bold;}
+button.theme-switcher{background-color: transparent;border:none;border-radius:0;box-shadow: unset;}
 button:hover,.button:hover {filter: brightness(1.3);}
 button:hover {border-color: var(--act);}
 button:active {background-color: var(--mbc);}
@@ -146,15 +147,14 @@ button:active {background-color: var(--mbc);}
 .man_form button{padding: 0 2rem;margin-left: 1rem;}
 .f8{font-size: 0.8rem;border-radius: 0.4rem;margin-bottom: 3rem;}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --mc:oklch(96.7% 0.003 264.542);
-    --mbc:oklch(21% 0.006 285.885 / 90%);/*zinc 900*/
-    --warn: oklch(65.2% 0.199 91.936);
-    --err: oklch(63.7% 0.237 25.331);
-    --act:var(--g3);
-    --gr:oklch(0.37 0.013 285.805);
-    --gr2:oklch(44.6% 0.03 256.802);
-    --mc-2: oklch(70.7% 0.022 261.325);/* gray 400 */
-  }
+
+:root[data-theme="dark"] {
+  --mc:oklch(96.7% 0.003 264.542);
+  --mbc:oklch(21% 0.006 285.885 / 90%);/*zinc 900*/
+  --warn: oklch(65.2% 0.199 91.936);
+  --err: oklch(63.7% 0.237 25.331);
+  --act:var(--g3);
+  --gr:oklch(0.37 0.013 285.805);
+  --gr2:oklch(44.6% 0.03 256.802);
+  --mc-2: oklch(70.7% 0.022 261.325);/* gray 400 */
 }

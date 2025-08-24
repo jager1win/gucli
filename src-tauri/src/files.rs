@@ -106,12 +106,12 @@ pub fn full_path_log() -> PathBuf {
 pub fn set_config(reset: Option<bool>) -> io::Result<String> {
     let reset = reset.unwrap_or(false);
     let commands_path = full_path_commands();
-    let example_commands = get_home_dir().expect("Home dir not found").join(".config/gucli/example.commands.toml");
+    let example_path = get_home_dir().expect("Home dir not found").join(".config/gucli/example.commands.toml");
 
     if !commands_path.exists() || reset {
         fs::create_dir_all(commands_path.parent().unwrap())?;
 
-        let default_config = r#"# params: command=string(with args), icon=string(<= 8 chars), sn=bool(default=true)
+        let default_config = r#"# params: command=string(with args, unique), icon=string(<= 8 chars), sn=bool(default=true)
 [[commands]]
 command = "hostname -A"
 icon = "😀"
@@ -122,7 +122,9 @@ command = "id"
 icon = "🚀"
 sn = true"#;
         fs::write(&commands_path, default_config.trim())?;
-        fs::write(&example_commands, default_config.trim())?;
+        if !example_path.exists() {
+            fs::write(&example_path, default_config.trim())?;
+        }
         Ok("File commands.toml created".to_string())
     } else {
         Ok("File commands.toml exists".to_string())
