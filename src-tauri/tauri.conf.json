@@ -30,7 +30,7 @@
     "category": "Utility",
     "licenseFile":"../LICENSE",
     "license": "GPL-3.0+",
-    "shortDescription": "GUI tray interface for cli commands",
+    "shortDescription": "Tray interface for CLI Linux commands",
     "longDescription": "Run custom console commands by clicking in the tray",
     "homepage": "https://github.com/jager1win/gucli",
     "icon": [
@@ -47,16 +47,12 @@
       "deb": {
         "files": {},
         "depends": [
-          "libc6 (>= 2.35)",
-          "libgtk-3-0 (>= 3.24)"
         ]
       },
       "rpm": {
         "epoch": 0,
         "files": {},
         "depends": [
-          "glibc >= 2.35",
-          "gtk3 >= 3.24"
         ]
       }
     }

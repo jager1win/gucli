@@ -1,10 +1,11 @@
 [package]
-name = "gucli"
-version = "0.1.0"
-description = "linux tray app for run cli commands"
+name = "Gucli"
+version = "1.0.0"
+description = "tray interface for CLI Linux commands"
 authors = ["Yuriy (Jager) Lysov"]
 edition = "2024"
 license = "GPL-3.0+"
+repository = "https://github.com/jager1win/gucli"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -31,3 +32,4 @@ nix = "0.30"
 gtk4 = { version = "0.10" } 
 webkit2gtk = { version = "2.0.1", features = ["v2_20"] }
 ansi-to-html = "0.2.2"
+regex = "1.11.2"

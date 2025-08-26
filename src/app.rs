@@ -71,6 +71,7 @@ pub fn App() -> impl IntoView {
     let (autostart, set_autostart) = signal(false);
     let (is_maximized, set_is_maximized) = signal("max0");
     let (reset, set_reset) = signal(false);
+    
     //+ init commands on open window
     let init = move || {spawn_local(async move {
         let js_value = invoke_without_args("get_commands").await;
@@ -213,7 +214,7 @@ pub fn App() -> impl IntoView {
             set_status.set("Ok( Autostart updated )".to_string());
         });
     };
-
+ 
     //+ move command in vec - up & down id
     let move_command = {
         fn move_by(commands: &mut [Command], id: usize, dir: isize) {
@@ -238,7 +239,7 @@ pub fn App() -> impl IntoView {
         }
     };
 
-    //monitored status changes update the time of the last operation
+    // monitored status changes update the time of the last operation
     Effect::new(move |_| {
         status.track();
         set_ttime.set(Local::now().format("%Y-%m-%d %H:%M:%S.%3f").to_string());
@@ -280,7 +281,7 @@ pub fn App() -> impl IntoView {
                 class="tabs-header"
                 on:click=move |_| set_active_tab.set(2)
             >
-                "Help"
+                "About"
             </button>
             <ThemeToggle />
 
@@ -390,6 +391,7 @@ pub fn App() -> impl IntoView {
                                     <div class="iicon">
                                         <input
                                             type="text"
+                                            placeholder="8 chars"
                                             size="8"
                                             maxlength="8"
                                             value=move || icon.get()
@@ -502,88 +504,40 @@ If you need help with specific keys [--longhelp, --help-all] - enter the require
 
 #[component]
 pub fn Help() -> impl IntoView { 
+    let (info, set_info) = signal(Vec::<String>::new());
+    Effect::new(move |_| {
+        spawn_local(async move {
+            let js_value = invoke_without_args("get_app_info").await;
+            if let Ok(vec_info) = from_value(js_value) {
+                set_info.set(vec_info);
+        }
+    });
+    });
     view! {
-        <div class="help text-bg">
-            <p class="tc">
-                "GUCLI Primarily designed for external installed programs, but you can run anything — even `rm -rf /xxx`"
-                <br /> "⚠ Warning: Not a CLI replacement!"<br />
-                "Always test commands in terminal first, only add to GUCLI when 110% certain."<br />
-                "Your future self will either thank you or curse you 😈"
+        <div class="help tc">
+            <p class="">
+                <h5>"Gucli - Your personal command line menu"</h5>
+
+                <p>"Gucli (from GUI + CLI) is a simple system tray application"<br />
+                "that turns your frequent console commands into menu items for one-click launching."<br />
+                Get rid of the routine of retyping them.<br />
+
+                "⚠ Warning: Not a CLI replacement!"</p>
+
+                {move || {info.get().into_iter()
+                    .map(|n|  
+                        if n.starts_with("http") {
+                            view!{ <p>Homepage <a href={n}>{n.clone()}</a></p>}.into_any()
+                        }else {
+                            view!{<p>{n}</p>}.into_any()
+                        }
+                    )
+                    .collect_view()
+                }}
+
+                <p>"For information on compatibility, dependencies, or to report issues, please visit the homepage."</p>
             </p>
-            <ul>
-                <li>
-                    <b class="stt">"Config file"</b>
-                    " is located at "
-                    <b class="stt">"`/home/$USER/.config/gucli/commands.toml`"</b>
-                    <br />
-                    "Default settings (after install or `Reset to default`) look like:"
-                    <br />
-                    <pre>
-                        "# params: command=string(with args), active=bool(default true), sn=bool(default=true)"
-                        <br /> "[[command]]"<br /> "name = \"hostname -A\""<br /> "active = true"
-                        <br /> "sn = true"<br />
-                    </pre>
-                    "The first line describes the structure - add commands accordingly"
-                </li>
-                <li>
-                    <b class="stt">"Editing settings"</b>
-                    " can be done either in GUI or text editor."
-                    <br />
-                    "After manual editing, restart the application."
-                    <br />
-                    "You can add command: `xdg-open /home/$USER/.config/gucli/commands.toml`"
-                    <br />
-                    "& replace `xdg-open` with your preferred text editor"
-                </li>
-                <li>
-                    <b class="stt">"SN (system notification)"</b>
-                    " will always show error messages, even when disabled"
-                </li>
-                <li>
-                    "Command ID in tray menu is the command string itself - for explicit selection and error prevention."
-                </li>
-                <li>
-                    <b class="stt">"Use trailing `&`"</b>
-                    " for complex commands (background execution)"
-                    <br />
-                    "In tray menu it may appear as `_` due to system formatting"
-                    <br />
-                </li>
-                <li>
-                    <strong>"Linux Command Types:"</strong>
-                    <ul>
-                        <li>
-                            <b class="stt">"Regular"</b>
-                            " (e.g., `ls -la /home/$USER/Pictures`): Can be converted to a string and output shown in notification"
-                        </li>
-                        <li>
-                            <b class="stt">"Long-running"</b>
-                            " (e.g., `watch`): Cannot be converted to a string"
-                        </li>
-                        <li>
-                            <b class="stt">"No-output"</b>
-                            " (e.g., `sleep`): Notifications can be disabled"
-                        </li>
-                    </ul>
-                </li>
-                <li>
-                    <strong>"Linux Command Types:"</strong>
-                    <ul>
-                        <li>
-                            <b class="stt">"Regular"</b>
-                            " (e.g., `ls -la /home/$USER/Pictures`): Can be converted to a string and output shown in notification"
-                        </li>
-                        <li>
-                            <b class="stt">"Long-running"</b>
-                            " (e.g., `watch`): Cannot be converted to a string"
-                        </li>
-                        <li>
-                            <b class="stt">"No-output"</b>
-                            " (e.g., `sleep`): Notifications can be disabled"
-                        </li>
-                    </ul>
-                </li>
-            </ul>
+            
         </div>
     }
 }
@@ -650,3 +604,4 @@ pub fn ThemeToggle() -> impl IntoView {
         </button>
     }
 }
+

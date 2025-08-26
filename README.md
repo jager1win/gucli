@@ -61,7 +61,6 @@ sn = true
 
 **Gucli** (от **GUI** + **CLI**) — это лёгкое приложение для системного трея, которое даёт вам мгновенный графический доступ к любым консольным командам и скриптам. Запускайте часто используемые действия в один клик, не открывая терминал.
 
-Распространяется под свободной лицензией **GPL-3.0-or-later**.
 
 ---
 
@@ -165,3 +164,38 @@ sn = true
 - Долго выполняющиеся (например, `watch`): нельзя преобразовать в строку. Категорически не рекомендую использовать подобные команды в программе, для этого есть полноценный терминал, они просто повиснут в процессах. Ограничений я никаких не применял - пользователь должен сам понимать что делает и чем это грозит.
 
 ### Home project: https://github.com/jager1win/gucli
+
+Возможные проблемы:
+- Для работы приложения требуется GTK>=3
+- Уведомления: Для отображения системных уведомлений приложение использует утилиту notify-send. В некоторых дистрибутивах (например, в минимальных установках Debian) она может отсутствовать. Для исправления установите пакет libnotify-bin.
+
+
+GUCLI Primarily designed for external installed programs, but you can run anything — even `rm -rf /xxx`
+⚠ Warning: Not a CLI replacement!
+Always test commands in terminal first, only add to GUCLI when 110% certain.
+Your future self will either thank you or curse you 😈
+
+Config file is located at `/home/$USER/.config/gucli/commands.toml`
+Default settings (after install or `Reset to default`) look like:
+# params: command=string(with args), active=bool(default true), sn=bool(default=true)
+[[command]]
+name = "hostname -A"
+active = true
+sn = true
+The first line describes the structure - add commands accordingly
+Editing settings can be done either in GUI or text editor.
+After manual editing, restart the application.
+You can add command: `xdg-open /home/$USER/.config/gucli/commands.toml`
+& replace `xdg-open` with your preferred text editor
+SN (system notification) will always show error messages, even when disabled
+Command ID in tray menu is the command string itself - for explicit selection and error prevention.
+Use trailing `&` for complex commands (background execution)
+In tray menu it may appear as `_` due to system formatting
+Linux Command Types:
+Regular (e.g., `ls -la /home/$USER/Pictures`): Can be converted to a string and output shown in notification
+Long-running (e.g., `watch`): Cannot be converted to a string
+No-output (e.g., `sleep`): Notifications can be disabled
+Linux Command Types:
+Regular (e.g., `ls -la /home/$USER/Pictures`): Can be converted to a string and output shown in notification
+Long-running (e.g., `watch`): Cannot be converted to a string
+No-output (e.g., `sleep`): Notifications can be disabled

@@ -56,7 +56,7 @@ fn get_man(cmd: &str) -> Result<String, String> {
     };
 
     match result {
-        Ok(output) => Ok(output),
+        Ok(output) => Ok(process_man_output(output)),
         Err(e) => Ok(e) // Return error message as normal output
     }
 }
@@ -104,6 +104,17 @@ async fn run_test(cmd: UserCommand) -> Result<String, String>  {
         Ok(success) => Ok(success),
         Err(error) => Ok(error),
     }
+}
+
+#[tauri::command]
+fn get_app_info() -> Vec<String> {
+    let mut result = Vec::new();
+    result.push(format!("Version: {}", env!("CARGO_PKG_VERSION")));
+    result.push(format!("Authors: {}", env!("CARGO_PKG_AUTHORS")));
+    result.push(format!("License: {}", env!("CARGO_PKG_LICENSE")));
+    result.push(env!("CARGO_PKG_REPOSITORY").to_string());
+    
+    result
 }
 
 pub fn run() {
@@ -174,7 +185,8 @@ pub fn run() {
             ctrl_window,
             autostart_enable,
             autostart_status,
-            get_man
+            get_man,
+            get_app_info
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -300,4 +312,22 @@ async fn autostart_status() -> Result<bool, String> {
         .join(".config/autostart/gucli.desktop");
 
     Ok(autostart_file.exists())
+}
+
+pub fn process_man_output(output: String) -> String {
+    let patterns = [
+        (r"(?:^|\s)(-{1,2}[a-zA-Z0-9][^\s]*)", "man-dash"),
+        (r"\b([A-ZА-Я]{2,})\b", "man-uppercase"),
+    ];
+
+    let mut result = output;
+    for (pattern, class_name) in patterns.iter() {
+        if let Ok(re) = regex::Regex::new(pattern) {
+            result = re.replace_all(&result, |caps: &regex::Captures| {
+                format!(r#"<span class="{}">{}</span>"#, class_name, &caps[0])
+            }).to_string();
+        }
+    }
+    
+    result
 }
