@@ -242,20 +242,64 @@ fn run_command(cmd:String, sn:bool) -> Result<String, String> {
     Ok(message)
 }
 
+use std::process::{Stdio};
+use std::time::{Duration, Instant};
+use std::thread;
+
 fn execute_command(command: &str) -> Result<String, String> {
-    let output = Command::new("sh")
+    let timeout_secs = 0.5; // Hard limit of 500 ms
+    let check_interval = Duration::from_millis(100); // Check every 100 ms
+    let mut child = Command::new("sh")
         .arg("-c")
         .arg(command)
-        .output()
-        .map_err(|e| e.to_string())?;
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| format!("Failed to spawn process: {}", e))?;
 
-    if output.status.success() {
-        let out = String::from_utf8(output.stdout).map_err(|e| e.to_string());
-        let converted = ansi_to_html::convert(&out.unwrap()).unwrap();
-        Ok(converted)
-    } else {
-        Err(String::from_utf8(output.stderr).unwrap_or_else(|_| "Unknown error".to_string()))
+    let start = Instant::now();
+    let timeout = Duration::from_secs_f64(timeout_secs);
+
+    // Execution time monitoring with periodic check
+    while start.elapsed() < timeout {
+        match child.try_wait() {
+            Ok(Some(status)) => {
+                // Process completed
+                let output = child.wait_with_output()
+                    .map_err(|e| format!("Failed to get output: {}", e))?;
+                
+                return if status.success() {
+                    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+                    let converted = ansi_to_html::convert(&stdout)
+                        .map_err(|e| format!("ANSI conversion error: {}", e))?;
+                    // String length limit up to 200
+                    let limited_converted = if converted.chars().count() > 200 {
+                        format!("{}...", converted.chars().take(200).collect::<String>())
+                    } else {
+                        converted
+                    };
+                    Ok(limited_converted)
+                } else {
+                    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+                    Err(stderr)
+                };
+            }
+            Ok(None) => {
+                // process is still running, we are waiting a bit
+                thread::sleep(check_interval);
+            }
+            Err(e) => return Err(format!("Error waiting for process: {}", e)),
+        }
     }
+
+    // timeout is exceeded - we kill the process and all child processes
+    let _ = child.kill();
+    
+    // Give the process some time to finish correctly
+    thread::sleep(Duration::from_millis(100));
+    let _ = child.wait();
+
+    Err(format!("Command timed out after {} seconds", timeout_secs))
 }
 
 fn send_notification(summary: &str, body: &str) {
@@ -317,7 +361,7 @@ async fn autostart_status() -> Result<bool, String> {
 pub fn process_man_output(output: String) -> String {
     let patterns = [
         (r"(?:^|\s)(-{1,2}[a-zA-Z0-9][^\s]*)", "man-dash"),
-        (r"\b([A-ZА-Я]{2,})\b", "man-uppercase"),
+        (r"\b([A-Z]{2,})\b", "man-uppercase"),
     ];
 
     let mut result = output;

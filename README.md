@@ -1,4 +1,4 @@
-## GUCLI — tray interface for CLI Linux commands
+## Gucli - Your personal command line menu
 
 ### Назначение
 - Простое меню в системном трее для запуска сохранённых пользовательских CLI-команд по клику.
@@ -46,12 +46,6 @@ sn = true
 
 ## Created using [Tauri](https://github.com/tauri-apps/tauri) + [Leptos](https://github.com/leptos-rs/leptos)
 
-
-
-
-Абсолютно согласен! Правильный подход — не "продавать", а **ясно объяснять ценность** для потенциальных пользователей и сообщества. И да, упоминание конкретного продукта (WARP CLI) действительно может сужать восприятие.
-
-Вот финальная, отполированная версия описания, которая делает акцент на универсальности, свободе и мощи для пользователя:
 
 ---
 
@@ -170,10 +164,7 @@ sn = true
 - Уведомления: Для отображения системных уведомлений приложение использует утилиту notify-send. В некоторых дистрибутивах (например, в минимальных установках Debian) она может отсутствовать. Для исправления установите пакет libnotify-bin.
 
 
-GUCLI Primarily designed for external installed programs, but you can run anything — even `rm -rf /xxx`
 ⚠ Warning: Not a CLI replacement!
-Always test commands in terminal first, only add to GUCLI when 110% certain.
-Your future self will either thank you or curse you 😈
 
 Config file is located at `/home/$USER/.config/gucli/commands.toml`
 Default settings (after install or `Reset to default`) look like:
@@ -185,8 +176,7 @@ sn = true
 The first line describes the structure - add commands accordingly
 Editing settings can be done either in GUI or text editor.
 After manual editing, restart the application.
-You can add command: `xdg-open /home/$USER/.config/gucli/commands.toml`
-& replace `xdg-open` with your preferred text editor
+
 SN (system notification) will always show error messages, even when disabled
 Command ID in tray menu is the command string itself - for explicit selection and error prevention.
 Use trailing `&` for complex commands (background execution)
@@ -199,3 +189,28 @@ Linux Command Types:
 Regular (e.g., `ls -la /home/$USER/Pictures`): Can be converted to a string and output shown in notification
 Long-running (e.g., `watch`): Cannot be converted to a string
 No-output (e.g., `sleep`): Notifications can be disabled
+
+зависимости, которые не стал добавлять в tauri.conf.json:
+    "linux": {
+      "deb": {
+        "files": {},
+        "depends": [
+          "libc6 (>= 2.35)",
+          "libgtk-3-0 (>= 3.24)",
+          "libayatana-appindicator-glib | libayatana-appindicator3-1 | libappindicator3-1 | libkf5notifications5"
+        ]
+      },
+      "rpm": {
+        "epoch": 0,
+        "files": {},
+        "depends": [
+          "glibc >= 2.35",
+          "gtk3 >= 3.24",
+          "ayatana-appindicator3 | libappindicator-gtk3 | kf5-knotifications"
+        ]
+      }
+    }
+
+Ограничения в программе:
+  - Команды выполняются с ограничением времени в 500 мс. Используйте только быстрые команды, возвращающие результат мгновенно.
+  - Длина текста в уведомлении ограничена 200 символами.
