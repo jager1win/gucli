@@ -214,3 +214,17 @@ No-output (e.g., `sleep`): Notifications can be disabled
 Ограничения в программе:
   - Команды выполняются с ограничением времени в 500 мс. Используйте только быстрые команды, возвращающие результат мгновенно.
   - Длина текста в уведомлении ограничена 200 символами.
+
+## Security and Responsibility
+
+Gucli executes commands with your user privileges. You are responsible for:
+
+- Choosing appropriate commands
+- Understanding what each command does  
+- Avoiding destructive operations
+- Not running background processes that may consume resources
+
+The application includes:
+- ⏱️ 500ms timeout protection
+- 📋 Output truncation for notifications  
+- 🛡️ Basic sanity checks

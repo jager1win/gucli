@@ -117,6 +117,48 @@ fn get_app_info() -> Vec<String> {
     result
 }
 
+#[tauri::command]
+async fn autostart_toggle() -> Result<String, String> {
+    let enabled = autostart_status().await.map_err(|e| {error!(%e, "cannot get autostart status");e})?;
+    let home = get_home_dir().map_err(|e| e.to_string())?;
+    let desktop_path: std::path::PathBuf = home.join(".config/autostart/gucli.desktop");
+    if enabled {// remove
+        let _ = fs::remove_file(&desktop_path);
+        Ok("autostart disabled".into())
+    } else {// add
+        let exec_path = env::current_exe().map_err(|e| e.to_string())?;
+
+        if let Some(dir) = desktop_path.parent() {
+            fs::create_dir_all(dir).map_err(|e| e.to_string())?;
+        }
+
+        let desktop_file = format!(
+            "[Desktop Entry]\n\
+            Name=Gucli\n\
+            Type=Application\n\
+            Categories=Utility\n\
+            StartupNotify=true\n\
+            Exec={}\n\
+            X-KDE-autostart-after=panel\n\
+            X-LXQt-Need-Tray=true\n\
+            X-GNOME-Autostart-enabled=true\n",
+            exec_path.display()
+        );
+
+        fs::write(&desktop_path, desktop_file).map_err(|e| e.to_string())?;
+        Ok("autostart enabled".into())
+    }
+}
+
+#[tauri::command]
+async fn autostart_status() -> Result<bool, String> {
+    let autostart_file = get_home_dir()
+        .map_err(|e| e.to_string())?
+        .join(".config/autostart/gucli.desktop");
+
+    Ok(autostart_file.exists())
+}
+
 pub fn run() {
     if let Err(e) = set_config(None) {
         error!("Failed to init config: {}",e);
@@ -183,7 +225,7 @@ pub fn run() {
             run_test,
             request_restart,
             ctrl_window,
-            autostart_enable,
+            autostart_toggle,
             autostart_status,
             get_man,
             get_app_info
@@ -219,18 +261,18 @@ fn run_command(cmd:String, sn:bool) -> Result<String, String> {
     let (is_success, message) = match &result {
         Ok(output) => (
             true,
-            format!("Ok( Command <{}> executed ), Result:\n {}", &cmd, &output),
+            format!("Ok( Command `{}` executed ), Result:\n {}", &cmd, &output),
         ),
         Err(err) => (
             false,
-            format!("Err( Command <{}> failed ), Error:\n {}", &cmd, &err),
+            format!("Err( Command `{}` failed ), Error:\n {}", &cmd, &err),
         ),
     };
 
     // push to log
     match result {
-        Ok(val) => info!("Command <{}> executed, Result: {}", cmd.clone(), val.replace("\n", " ")),
-        Err(err) => error!("Command <{}> failed, Error: {}", cmd.clone(), err),
+        Ok(val) => info!("Command `{}` executed, Result: {}", cmd.clone(), val.replace("\n", " ")),
+        Err(err) => error!("Command `{}` failed, Error: {}", cmd.clone(), err),
     }
 
     // send notification if fail or enable sn
@@ -313,49 +355,6 @@ fn send_notification(summary: &str, body: &str) {
     } else {
         error!("notify-send not found. Notification skipped: {} - {}", summary, body);
     }
-}
-
-/// toggle autostart
-#[tauri::command]
-async fn autostart_enable() -> Result<String, String> {
-    let enabled = autostart_status().await.map_err(|e| {error!(%e, "cannot get autostart status");e})?;
-    let home = get_home_dir().map_err(|e| e.to_string())?;
-    let desktop_path: std::path::PathBuf = home.join(".config/autostart/gucli.desktop");
-    if enabled {// remove
-        let _ = fs::remove_file(&desktop_path);
-        Ok("autostart disabled".into())
-    } else {// add
-        let exec_path = env::current_exe().map_err(|e| e.to_string())?;
-
-        if let Some(dir) = desktop_path.parent() {
-            fs::create_dir_all(dir).map_err(|e| e.to_string())?;
-        }
-
-        let desktop_file = format!(
-            "[Desktop Entry]\n\
-            Name=Gucli\n\
-            Type=Application\n\
-            Categories=Utility\n\
-            StartupNotify=true\n\
-            Exec={}\n\
-            X-KDE-autostart-after=panel\n\
-            X-LXQt-Need-Tray=true\n\
-            X-GNOME-Autostart-enabled=true\n",
-            exec_path.display()
-        );
-
-        fs::write(&desktop_path, desktop_file).map_err(|e| e.to_string())?;
-        Ok("autostart enabled".into())
-    }
-}
-
-#[tauri::command]
-async fn autostart_status() -> Result<bool, String> {
-    let autostart_file = get_home_dir()
-        .map_err(|e| e.to_string())?
-        .join(".config/autostart/gucli.desktop");
-
-    Ok(autostart_file.exists())
 }
 
 pub fn process_man_output(output: String) -> String {

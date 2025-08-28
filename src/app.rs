@@ -155,7 +155,7 @@ pub fn App() -> impl IntoView {
     };
 
     let run_test = move |cmd: Command| {
-        log::info!("Testing command: {:?}", &cmd);
+        log::debug!("Testing command: {:?}", &cmd);
         if cmd.command.trim().is_empty() {
             set_status.set("Err( Field `command` cannot be empty )".to_string());
             return;
@@ -207,7 +207,7 @@ pub fn App() -> impl IntoView {
     let toggle_autostart = move || {
         spawn_local(async move {
             // Check current status for autostart
-            let status_js = invoke_without_args("autostart_enable").await;
+            let status_js = invoke_without_args("autostart_toggle").await;
             let _current_status = from_value::<Result<String, String>>(status_js)
                 .unwrap_or(Err("Err( Autostart status unknown )".to_string()));
             autostart_status();
@@ -430,7 +430,7 @@ pub fn App() -> impl IntoView {
                     />
                     <div class="buttons bb">
                         <button class="ok-bg" on:click=move |_| add_command()>
-                            "Add row"
+                            "Add command"
                         </button>
                         <button class="ok-bg" on:click=move |_| save(commands.get())>
                             "Save & Restart"

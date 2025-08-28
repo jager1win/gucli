@@ -69,12 +69,12 @@ border-radius: 0 0 0.8rem 0.8rem;}
 .topline{display:inline-flex; width: 100%;align-items: center; justify-content: space-evenly;height: 3rem;}
 .topline>button{min-width: 9rem;}
 .status{border-top: 1px solid var(--mc-2);border-bottom: 1px solid var(--mc-2);display:grid;grid-template-columns: 1fr 1fr 6fr;
-  min-height: 3.6rem;align-items: center; grid-template-rows: auto;padding: 0.2rem 0.4rem;background-color: var(--mbc); }
+  min-height: 4rem;align-items: center; grid-template-rows: auto;padding: 0.2rem 0.4rem;background-color: var(--mbc); }
 .status > div:nth-child(1){white-space: nowrap;}
 .status > div:nth-child(1) > *{margin:0.6rem 0 0.6rem 0; font-weight: 700;}
 .status > div:nth-child(2){white-space: wrap;word-wrap:break-word;overflow-wrap:anywhere;}
 .status > div:nth-child(3){overflow: auto;display: flex;overflow: overlay;scrollbar-gutter: stable;}
-.status-block{flex: 1 1 auto;white-space: pre;width: max-content;min-height:3rem;padding: 0 0.4rem;overflow: auto;max-height: 3rem;}
+.status-block{white-space: pre;width: max-content;min-height:3rem;padding: 0 0.4rem;overflow: hidden auto;max-height: 4rem;overflow-wrap: break-word;hyphens: auto;width: 100%;}
 .ttime{color:var(--mc-2);}
 .iicon input{text-align: center;}
 div.buttons{display: flex; justify-content: space-evenly;border-top: 1px solid var(--mc-2);padding-top:0.6rem;margin-top:0.8rem;}
