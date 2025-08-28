@@ -278,7 +278,12 @@ fn run_command(cmd:String, sn:bool) -> Result<String, String> {
     // send notification if fail or enable sn
     if !is_success || sn {
         let (summary, body) = message.split_at(message.find('\n').unwrap_or(message.len()));
-        send_notification(summary, body);
+        let limited_body = if body.chars().count() > 200 {
+            format!("{}...", body.chars().take(200).collect::<String>())
+        } else {
+            body.to_string()
+        };
+        send_notification(summary, &limited_body);
     }
 
     Ok(message)
@@ -314,13 +319,7 @@ fn execute_command(command: &str) -> Result<String, String> {
                     let stdout = String::from_utf8_lossy(&output.stdout).to_string();
                     let converted = ansi_to_html::convert(&stdout)
                         .map_err(|e| format!("ANSI conversion error: {}", e))?;
-                    // String length limit up to 200
-                    let limited_converted = if converted.chars().count() > 200 {
-                        format!("{}...", converted.chars().take(200).collect::<String>())
-                    } else {
-                        converted
-                    };
-                    Ok(limited_converted)
+                    Ok(converted)
                 } else {
                     let stderr = String::from_utf8_lossy(&output.stderr).to_string();
                     Err(stderr)

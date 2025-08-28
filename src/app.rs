@@ -451,8 +451,8 @@ pub fn App() -> impl IntoView {
 #[component]
 pub fn ManSearch() -> impl IntoView {
     use leptos::{ev::SubmitEvent};
-    static HELP: &str = "You can simply write the command name in input - a search will be performed by `man` && `--help`.
-If you need help with specific keys [--longhelp, --help-all] - enter the required command in full";
+    static HELP: &str = "Enter a command to search its man and --help info.
+For specific flags like --longhelp, type the full command.";
     let (man, set_man) = signal(HELP.to_string());
     let (input_value, set_input_value) = signal("".to_string());
 
@@ -498,7 +498,7 @@ If you need help with specific keys [--longhelp, --help-all] - enter the require
             </button>
         </form>
 
-        <pre class="f8 text-bg" inner_html=move || man.get()></pre>
+        <pre class="man_result" inner_html=move || man.get()></pre>
     }
 }
 
@@ -516,7 +516,7 @@ pub fn Help() -> impl IntoView {
     view! {
         <div class="help tc">
             <p class="">
-                <h5>"Gucli - Your personal command line menu"</h5>
+                <h4>"Gucli - Your personal command line menu"</h4>
 
                 <p>"Gucli (from GUI + CLI) is a simple system tray application"<br />
                 "that turns your frequent console commands into menu items for one-click launching."<br />

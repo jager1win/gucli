@@ -146,7 +146,7 @@ button:active {background-color: var(--mbc);}
 .man_form{display: flex;justify-content: center;}
 .man_form button{padding: 0 2rem;margin-left: 1rem;}
 .f8{border-radius: 0.4rem;font-family: system-ui, sans-serif;}
-
+.man_result{font-size: 0.8rem;}
 .man-uppercase {color:var(--t1)}
 .man-dash {color:var(--t2)}
 .man-uppercase, .man-dash{font-weight: 900;}
