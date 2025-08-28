@@ -255,7 +255,7 @@ pub fn App() -> impl IntoView {
         let current_status = status.get_untracked();
         
         if has_unsaved_changes && !current_status.contains("Unsaved changes") {
-            set_status.set(format!("{} \nUnsaved changes - Save & Restart!", current_status));
+            set_status.set(format!("{} \n<span class='err-text'>Unsaved changes - Save & Restart!</span>", current_status));
         }
     });
 
