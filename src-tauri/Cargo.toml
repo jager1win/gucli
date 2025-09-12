@@ -29,7 +29,7 @@ chrono = "0.4"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 nix = "0.30"
-gtk4 = { version = "0.10" } 
+#gtk = { version = "0.18" }
+#gtk4 = { version = "0.10" } 
 webkit2gtk = { version = "2.0.1", features = ["v2_20"] }
-ansi-to-html = "0.2.2"
 regex = "1.11.2"

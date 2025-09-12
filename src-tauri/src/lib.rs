@@ -8,6 +8,9 @@ use tauri::{
 use tracing::{debug, error, info};
 pub mod files;
 use crate::files::*;
+use std::process::{Stdio};
+use std::time::{Duration, Instant};
+use std::thread;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserCommand {
@@ -31,34 +34,30 @@ fn get_man(cmd: &str) -> Result<String, String> {
     const MIN_HELP_LENGTH: usize = 50;// Minimum length for valid help output (short outputs are considered errors)
 
     // Flags that should be executed as-is (with their original formatting)
-    let help_flags = [" --longhelp ", " --help-all ", " --help ", " help ", " -? ", "man ", " info ", " --usage ", " -help "];
-    let has_help_flag = help_flags.iter().any(|&flag| cmd.contains(flag));
+    let help_flags = [" --help", " -h", " --usage", " help", " -help", " -?", " --longhelp", " --long-help", " --help-all", " info"];
 
-    // Try to execute the command (either with flags or help variants)
-    let result = if has_help_flag {
-        // Execute command exactly as entered when help flags are present
-        execute_command(cmd)
-    } else {
-        // Try different help variants in sequence
-        let variants = [
-            format!("man -P cat {}", cmd),  // Try man first
-            format!("{} --help", cmd),      // Then --help
-        ];
-        
-        // Find the first variant that returns valid output
-        variants.iter()
-            .find_map(|cmd| {
-                execute_command(cmd).ok().filter(|output| 
-                    output.len() >= MIN_HELP_LENGTH 
-                )
-            })
-            .ok_or(format!("No valid help found for '{}'", cmd))
-    };
-
-    match result {
-        Ok(output) => Ok(process_man_output(output)),
-        Err(e) => Ok(e) // Return error message as normal output
+    // Read & return exactly as entered when help flags are present
+    if help_flags.iter().any(|&flag| cmd.contains(flag)) {
+        let output = read_man(cmd)?;
+        return Ok(process_man_output(output));
     }
+
+    // find varians when help flags are not present
+    let mut variants: Vec<String> = help_flags.iter()
+    .map(|flag| format!("{}{}", cmd, flag))
+    .collect();
+    variants.push(format!("MANPAGER=cat man {}", cmd));
+
+    for variant in &variants {
+        match read_man(variant) {
+            Ok(output) if output.len() >= MIN_HELP_LENGTH => {
+                return Ok(process_man_output(output));
+            }
+            _ => continue, // next variant
+        }
+    }
+
+    Err(format!("No valid help found for '{}'", cmd))
 }
 
 #[tauri::command]
@@ -289,10 +288,6 @@ fn run_command(cmd:String, sn:bool) -> Result<String, String> {
     Ok(message)
 }
 
-use std::process::{Stdio};
-use std::time::{Duration, Instant};
-use std::thread;
-
 fn execute_command(command: &str) -> Result<String, String> {
     let timeout_secs = 0.5; // Hard limit of 500 ms
     let check_interval = Duration::from_millis(100); // Check every 100 ms
@@ -314,12 +309,10 @@ fn execute_command(command: &str) -> Result<String, String> {
                 // Process completed
                 let output = child.wait_with_output()
                     .map_err(|e| format!("Failed to get output: {}", e))?;
-                
+
                 return if status.success() {
                     let stdout = String::from_utf8_lossy(&output.stdout).to_string();
-                    let converted = ansi_to_html::convert(&stdout)
-                        .map_err(|e| format!("ANSI conversion error: {}", e))?;
-                    Ok(converted)
+                    Ok(stdout)
                 } else {
                     let stderr = String::from_utf8_lossy(&output.stderr).to_string();
                     Err(stderr)
@@ -356,13 +349,19 @@ fn send_notification(summary: &str, body: &str) {
     }
 }
 
+// format help to html
 pub fn process_man_output(output: String) -> String {
+    let url_regex = regex::Regex::new(r"<(\bhttps?://[^\s>]+)>").unwrap();
+    let with_links = url_regex.replace_all(&output, |caps: &regex::Captures| {
+        format!(r#"<a href="{}" class="man-link">{}</a>"#, &caps[1], &caps[1])
+    });
+
     let patterns = [
         (r"(?:^|\s)(-{1,2}[a-zA-Z0-9][^\s]*)", "man-dash"),
         (r"\b([A-Z]{2,})\b", "man-uppercase"),
     ];
 
-    let mut result = output;
+    let mut result = with_links.to_string();
     for (pattern, class_name) in patterns.iter() {
         if let Ok(re) = regex::Regex::new(pattern) {
             result = re.replace_all(&result, |caps: &regex::Captures| {
@@ -373,3 +372,33 @@ pub fn process_man_output(output: String) -> String {
     
     result
 }
+
+fn read_man(cmd: &str)->Result<String, String>{
+    let max_chars:usize = 30000;
+    let output = Command::new("sh")
+        .arg("-c")
+        .arg(cmd)
+        .output()
+        .map_err(|e| format!("Failed read_man: {}", e))?;
+    
+    // We combine stdout and stderr, since the help can be in any of them
+    let result = if !output.stdout.is_empty() {
+        let s = String::from_utf8_lossy(&output.stdout).to_string();
+         if s.chars().count() <= max_chars {
+            s
+         }else{
+            s.chars().take(max_chars).collect()
+         }
+    } else {
+        String::from_utf8_lossy(&output.stderr).to_string()
+    };
+    
+    Ok(result)
+}
+
+/*
+eprintln!("status: {}", &output.status);
+eprintln!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+eprintln!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+
+*/
