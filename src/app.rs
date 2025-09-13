@@ -253,7 +253,7 @@ pub fn App() -> impl IntoView {
         status.track();
         set_ttime.set(Local::now().format("%Y-%m-%d %H:%M:%S.%3f").to_string());
         set_highlight.set(true);
-        set_timeout(move || set_highlight.set(false), std::time::Duration::from_secs(2));
+        set_timeout(move || set_highlight.set(false), std::time::Duration::from_millis(500));
         log::debug!("effect save->commands: {:?}", commands.get());
     });
 
@@ -360,39 +360,47 @@ pub fn App() -> impl IntoView {
                     <ForEnumerate
                         each=move || commands.get()
                         key=|command| command.id.to_string() + &command.command
-                        children={move |i: ReadSignal<usize>, command: Command| {
+                        let(i,command)
+                    >
+                        {move || {
                             let (com, set_com) = signal(command.command.clone());
-                            let (icon, set_icon) = signal(command.icon);
+                            let (icon, set_icon) = signal(command.icon.clone());
                             let (sn, set_sn) = signal(command.sn);
                             let sync_to_buffer = move || {
-                                let mut buf = commands.get();
-                                if let Some(slot) = buf.get_mut(i.get()) {
-                                    slot.command = com.get();
-                                    slot.icon = icon.get();
-                                    slot.sn = sn.get();
-                                }
-                                set_commands.update(move |b| *b = buf.clone());
-                                set_status.set(format!("Ok( Command {} `{}` updated )",i.get(),com.get()));
-                                log::debug!("buf save->commands: {:?}", commands.get());
+                                set_commands
+                                    .update(|buf| {
+                                        if let Some(slot) = buf.get_mut(i.get()) {
+                                            slot.command = com.get();
+                                            slot.icon = icon.get();
+                                            slot.sn = sn.get();
+                                        }
+                                    });
                             };
                             // When any local signal changes, we push the changes
-
                             view! {
                                 <div class="row">
                                     <div class="order">
-                                        <button class="up" on:click=move |_| move_command(true,i.get())
+                                        <button
+                                            class="up"
+                                            on:click=move |_| move_command(true, i.get())
                                             prop:disabled=move || i.get() == 0
-                                        >"↑"</button>
-                                        <span class="nn">{move || i.get()}</span>
-                                        <button class="down" on:click=move |_| move_command(false,i.get())
+                                        >
+                                            "↑"
+                                        </button>
+                                        <span class="nn">{i}</span>
+                                        <button
+                                            class="down"
+                                            on:click=move |_| move_command(false, i.get())
                                             prop:disabled=move || i.get() == commands.get().len() - 1
-                                        >"↓"</button>
+                                        >
+                                            "↓"
+                                        </button>
                                     </div>
                                     <input
                                         type="text"
                                         placeholder="Danger zone! Verify commands before adding..."
                                         value=move || com.get()
-                                        on:change=move |ev| {
+                                        on:input=move |ev| {
                                             set_com.set(event_target_value(&ev));
                                             sync_to_buffer();
                                         }
@@ -404,7 +412,7 @@ pub fn App() -> impl IntoView {
                                             size="8"
                                             maxlength="8"
                                             value=move || icon.get()
-                                            on:change=move |ev| {
+                                            on:input=move |ev| {
                                                 set_icon.set(event_target_value(&ev));
                                                 sync_to_buffer();
                                             }
@@ -421,7 +429,10 @@ pub fn App() -> impl IntoView {
                                         />
                                     </div>
                                     <div>
-                                        <button on:click=move |_| delete_command(i.get()) class="err-bg">
+                                        <button
+                                            on:click=move |_| delete_command(i.get())
+                                            class="err-bg"
+                                        >
                                             "Delete"
                                         </button>
                                     </div>
@@ -436,7 +447,8 @@ pub fn App() -> impl IntoView {
                                 </div>
                             }
                         }}
-                    />
+                    </ForEnumerate>
+
                     <div class="buttons bb">
                         <button class="ok-bg" on:click=move |_| add_command()>
                             "Add command"
@@ -448,7 +460,7 @@ pub fn App() -> impl IntoView {
                 </div>
 
                 <div class="settings-help">
-                    <pre inner_html=SETTINGS_HELP ></pre>
+                    <pre inner_html=SETTINGS_HELP></pre>
                 </div>
             </div>
             <div hidden=move || active_tab.get() != 1>
@@ -530,29 +542,42 @@ pub fn Help() -> impl IntoView {
             <p class="">
                 <h4>"Your personal command center in the system tray"</h4>
 
-                <p>"Gucli (from GUI + CLI) is a simple system tray application"<br />
-                "that turns your frequent console commands into menu items for one-click launching."<br />
-                Get rid of the routine of retyping them.<br />
+                <p>
+                    "Gucli (from GUI + CLI) is a simple system tray application"<br />
+                    "that turns your frequent console commands into menu items for one-click launching."
+                    <br />Get rid of the routine of retyping them.<br />
+                    "⚠ Warning: Not a CLI replacement!"
+                </p>
 
-                "⚠ Warning: Not a CLI replacement!"</p>
-
-                {move || {info.get().into_iter()
-                    .map(|n|  
-                        if n.starts_with("http") {
-                            view!{ <p>"Homepage: "<a href={n} target="_blank">{n.clone()}</a></p>}.into_any()
-                        }else {
-                            view!{<p>{n}</p>}.into_any()
-                        }
-                    )
-                    .collect_view()
+                {move || {
+                    info.get()
+                        .into_iter()
+                        .map(|n| {
+                            if n.starts_with("http") {
+                                view! {
+                                    <p>
+                                        "Homepage: "<a href=n target="_blank">
+                                            {n.clone()}
+                                        </a>
+                                    </p>
+                                }
+                                    .into_any()
+                            } else {
+                                view! { <p>{n}</p> }.into_any()
+                            }
+                        })
+                        .collect_view()
                 }}
 
-                <p>"For information on compatibility, dependencies, or to report issues, please visit the homepage."</p>
+                <p>
+                    "For information on compatibility, dependencies, or to report issues, please visit the homepage."
+                </p>
             </p>
-            
+
         </div>
     }
 }
+
 
 #[component]
 pub fn ThemeToggle() -> impl IntoView {
@@ -605,9 +630,10 @@ pub fn ThemeToggle() -> impl IntoView {
     view! {
         <button
             on:click=move |_| {
-                set_theme.update(|t| {
-                    *t = if *t == "light" { "dark".into() } else { "light".into() };
-                });
+                set_theme
+                    .update(|t| {
+                        *t = if *t == "light" { "dark".into() } else { "light".into() };
+                    });
             }
             class="theme-switcher"
             aria-label="Toggle theme"
@@ -616,4 +642,3 @@ pub fn ThemeToggle() -> impl IntoView {
         </button>
     }
 }
-
