@@ -33,3 +33,4 @@ nix = "0.30"
 #gtk4 = { version = "0.10" } 
 webkit2gtk = { version = "2.0.1", features = ["v2_20"] }
 regex = "1.11.2"
+tauri-plugin-opener = "2"

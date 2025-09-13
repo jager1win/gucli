@@ -60,6 +60,15 @@ extern "C" {
     async fn invoke(cmd: &str, args: JsValue) -> JsValue;
 }
 
+static SETTINGS_HELP: &str = r#"Critical settings information:
+
+• Option 1 - affects performance
+• Option 2 - changes behavior
+• Reset button - reverts to defaults
+
+For details see full documentation.
+"#;
+
 #[component]
 pub fn App() -> impl IntoView {
     let (active_tab, set_active_tab) = signal(0);
@@ -274,7 +283,7 @@ pub fn App() -> impl IntoView {
                 class="tabs-header"
                 on:click=move |_| set_active_tab.set(1)
             >
-                "Man pages & --help"
+                "Find help || man"
             </button>
             <button
                 class:active=move || active_tab.get() == 2
@@ -299,7 +308,7 @@ pub fn App() -> impl IntoView {
         </div>
 
         <main class="container">
-            <Show when=move || active_tab.get() == 0>
+            <div hidden=move || active_tab.get() != 0>
                 <div class="topline">
                     <button
                         on:click=move |_| toggle_autostart()
@@ -437,13 +446,17 @@ pub fn App() -> impl IntoView {
                         </button>
                     </div>
                 </div>
-            </Show>
-            <Show when=move || active_tab.get() == 1>
+
+                <div class="settings-help">
+                    <pre inner_html=SETTINGS_HELP ></pre>
+                </div>
+            </div>
+            <div hidden=move || active_tab.get() != 1>
                 <ManSearch />
-            </Show>
-            <Show when=move || active_tab.get() == 2>
+            </div>
+            <div hidden=move || active_tab.get() != 2>
                 <Help />
-            </Show>
+            </div>
         </main>
     }
 }
@@ -451,8 +464,7 @@ pub fn App() -> impl IntoView {
 #[component]
 pub fn ManSearch() -> impl IntoView {
     use leptos::{ev::SubmitEvent};
-    static HELP: &str = "Enter a command to search its man and --help info.
-For specific flags like --longhelp, type the full command.";
+    static HELP: &str = " Enter the command to search for reference information on it.\n\n For specific flags like --longhelp, type the full command.\n\n The maximum output length is limited to 30,000 characters.";
     let (man, set_man) = signal(HELP.to_string());
     let (input_value, set_input_value) = signal("".to_string());
 
@@ -488,7 +500,7 @@ For specific flags like --longhelp, type the full command.";
         <form on:submit=on_submit class="man_form">
             <input
                 type="text"
-                placeholder="e.g. `id`"
+                placeholder="e.g. `id` or `mpg123 -?`"
                 size=40
                 prop:value=move || input_value.get()
                 on:input=move |ev| set_input_value.set(event_target_value(&ev))
@@ -516,7 +528,7 @@ pub fn Help() -> impl IntoView {
     view! {
         <div class="help tc">
             <p class="">
-                <h4>"Gucli - Your personal command line menu"</h4>
+                <h4>"Your personal command center in the system tray"</h4>
 
                 <p>"Gucli (from GUI + CLI) is a simple system tray application"<br />
                 "that turns your frequent console commands into menu items for one-click launching."<br />
@@ -527,7 +539,7 @@ pub fn Help() -> impl IntoView {
                 {move || {info.get().into_iter()
                     .map(|n|  
                         if n.starts_with("http") {
-                            view!{ <p>Homepage <a href={n}>{n.clone()}</a></p>}.into_any()
+                            view!{ <p>"Homepage: "<a href={n} target="_blank">{n.clone()}</a></p>}.into_any()
                         }else {
                             view!{<p>{n}</p>}.into_any()
                         }

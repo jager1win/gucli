@@ -13,11 +13,13 @@
     "core:window:default",
     "core:window:allow-start-dragging",
     "core:window:allow-close",
-    "core:window:allow-minimize"
+    "core:window:allow-minimize",
+    "opener:default"
   ],
   "scope": {
     "allow": [
-      "$HOME/.config/gucli/*"
+      "$HOME/.config/gucli/*",
+      "/usr/lib/gucli/*"
     ]
   }
 }

@@ -1,13 +1,13 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use tracing_subscriber::{fmt, EnvFilter};
-use tracing_subscriber::fmt::time::FormatTime;
-use tracing_subscriber::fmt::format::Writer;
 use chrono::Local;
 use gucli_lib::files::LineLimitedWriter;
+use nix::libc;
 use std::fs::{File, OpenOptions};
 use std::os::unix::io::AsRawFd;
-use nix::libc;
+use tracing_subscriber::fmt::format::Writer;
+use tracing_subscriber::fmt::time::FormatTime;
+use tracing_subscriber::{EnvFilter, fmt};
 
 struct LogTime;
 
@@ -34,8 +34,7 @@ fn init_tracing() {
         .with_writer(file_writer)
         .finish();
 
-    tracing::subscriber::set_global_default(subscriber)
-        .expect("Failed to init logger");
+    tracing::subscriber::set_global_default(subscriber).expect("Failed to init logger");
 }
 
 // lock - single instance

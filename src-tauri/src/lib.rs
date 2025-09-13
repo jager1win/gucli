@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::{fs, env, process::Command};
+use std::{env, fs, process::Command};
 use tauri::{
     Manager, Runtime,
     menu::{MenuBuilder, MenuItem},
@@ -8,9 +8,9 @@ use tauri::{
 use tracing::{debug, error, info};
 pub mod files;
 use crate::files::*;
-use std::process::{Stdio};
-use std::time::{Duration, Instant};
+use std::process::Stdio;
 use std::thread;
+use std::time::{Duration, Instant};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserCommand {
@@ -31,10 +31,21 @@ fn get_man(cmd: &str) -> Result<String, String> {
         return Err("Enter the command to search for help".to_string());
     }
 
-    const MIN_HELP_LENGTH: usize = 50;// Minimum length for valid help output (short outputs are considered errors)
+    const MIN_HELP_LENGTH: usize = 50; // Minimum length for valid help output (short outputs are considered errors)
 
     // Flags that should be executed as-is (with their original formatting)
-    let help_flags = [" --help", " -h", " --usage", " help", " -help", " -?", " --longhelp", " --long-help", " --help-all", " info"];
+    let help_flags = [
+        " --help",
+        " -h",
+        " --usage",
+        " help",
+        " -help",
+        " -?",
+        " --longhelp",
+        " --long-help",
+        " --help-all",
+        " info",
+    ];
 
     // Read & return exactly as entered when help flags are present
     if help_flags.iter().any(|&flag| cmd.contains(flag)) {
@@ -43,9 +54,10 @@ fn get_man(cmd: &str) -> Result<String, String> {
     }
 
     // find varians when help flags are not present
-    let mut variants: Vec<String> = help_flags.iter()
-    .map(|flag| format!("{}{}", cmd, flag))
-    .collect();
+    let mut variants: Vec<String> = help_flags
+        .iter()
+        .map(|flag| format!("{}{}", cmd, flag))
+        .collect();
     variants.push(format!("MANPAGER=cat man {}", cmd));
 
     for variant in &variants {
@@ -57,7 +69,7 @@ fn get_man(cmd: &str) -> Result<String, String> {
         }
     }
 
-    Err(format!("No valid help found for '{}'", cmd))
+    Ok(format!("No valid help found for '{}'", cmd))
 }
 
 #[tauri::command]
@@ -98,7 +110,7 @@ async fn request_restart(app: tauri::AppHandle) {
 }
 
 #[tauri::command]
-async fn run_test(cmd: UserCommand) -> Result<String, String>  {
+async fn run_test(cmd: UserCommand) -> Result<String, String> {
     match run_command(cmd.command, cmd.sn) {
         Ok(success) => Ok(success),
         Err(error) => Ok(error),
@@ -112,19 +124,24 @@ fn get_app_info() -> Vec<String> {
     result.push(format!("Authors: {}", env!("CARGO_PKG_AUTHORS")));
     result.push(format!("License: {}", env!("CARGO_PKG_LICENSE")));
     result.push(env!("CARGO_PKG_REPOSITORY").to_string());
-    
+
     result
 }
 
 #[tauri::command]
 async fn autostart_toggle() -> Result<String, String> {
-    let enabled = autostart_status().await.map_err(|e| {error!(%e, "cannot get autostart status");e})?;
+    let enabled = autostart_status().await.map_err(|e| {
+        error!(%e, "cannot get autostart status");
+        e
+    })?;
     let home = get_home_dir().map_err(|e| e.to_string())?;
     let desktop_path: std::path::PathBuf = home.join(".config/autostart/gucli.desktop");
-    if enabled {// remove
+    if enabled {
+        // remove
         let _ = fs::remove_file(&desktop_path);
         Ok("autostart disabled".into())
-    } else {// add
+    } else {
+        // add
         let exec_path = env::current_exe().map_err(|e| e.to_string())?;
 
         if let Some(dir) = desktop_path.parent() {
@@ -160,7 +177,7 @@ async fn autostart_status() -> Result<bool, String> {
 
 pub fn run() {
     if let Err(e) = set_config(None) {
-        error!("Failed to init config: {}",e);
+        error!("Failed to init config: {}", e);
         std::process::exit(1);
     }
     let commands_config = load_commands().unwrap_or_else(|err| {
@@ -169,6 +186,7 @@ pub fn run() {
     });
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             // tray menu
             let settings = MenuItem::with_id(app, "settings", "⚙️   Settings", true, None::<&str>)?;
@@ -180,7 +198,7 @@ pub fn run() {
                 let item = MenuItem::with_id(
                     app,
                     format!("cmd_{}", cmd.command),
-                    cmd.icon.clone()+&String::from("    ")+&cmd.command,
+                    cmd.icon.clone() + &String::from("    ") + &cmd.command,
                     true,
                     None::<&str>,
                 )?;
@@ -207,7 +225,11 @@ pub fn run() {
                     "quit" => app.exit(0),
                     id if id.starts_with("cmd_") => {
                         let cmd_com = id.replace("cmd_", "");
-                        if let Some(cmd) = commands_config.commands.iter().find(|c| c.command == cmd_com) {
+                        if let Some(cmd) = commands_config
+                            .commands
+                            .iter()
+                            .find(|c| c.command == cmd_com)
+                        {
                             let _ = run_command(cmd_com, cmd.sn);
                         }
                     }
@@ -253,7 +275,7 @@ fn open_settings<R: Runtime>(app: &tauri::AppHandle<R>) {
     }
 }
 
-fn run_command(cmd:String, sn:bool) -> Result<String, String> {
+fn run_command(cmd: String, sn: bool) -> Result<String, String> {
     debug!("Executing command: {}", &cmd);
     let result = execute_command(&cmd);
 
@@ -270,7 +292,11 @@ fn run_command(cmd:String, sn:bool) -> Result<String, String> {
 
     // push to log
     match result {
-        Ok(val) => info!("Command `{}` executed, Result: {}", cmd.clone(), val.replace("\n", " ")),
+        Ok(val) => info!(
+            "Command `{}` executed, Result: {}",
+            cmd.clone(),
+            val.replace("\n", " ")
+        ),
         Err(err) => error!("Command `{}` failed, Error: {}", cmd.clone(), err),
     }
 
@@ -307,7 +333,8 @@ fn execute_command(command: &str) -> Result<String, String> {
         match child.try_wait() {
             Ok(Some(status)) => {
                 // Process completed
-                let output = child.wait_with_output()
+                let output = child
+                    .wait_with_output()
                     .map_err(|e| format!("Failed to get output: {}", e))?;
 
                 return if status.success() {
@@ -328,7 +355,7 @@ fn execute_command(command: &str) -> Result<String, String> {
 
     // timeout is exceeded - we kill the process and all child processes
     let _ = child.kill();
-    
+
     // Give the process some time to finish correctly
     thread::sleep(Duration::from_millis(100));
     let _ = child.wait();
@@ -337,7 +364,11 @@ fn execute_command(command: &str) -> Result<String, String> {
 }
 
 fn send_notification(summary: &str, body: &str) {
-    if Command::new("notify-send").arg("--version").output().is_ok() {
+    if Command::new("notify-send")
+        .arg("--version")
+        .output()
+        .is_ok()
+    {
         let _ = Command::new("notify-send")
             .arg(summary)
             .arg(body)
@@ -345,7 +376,10 @@ fn send_notification(summary: &str, body: &str) {
             .arg("--icon=system")
             .status();
     } else {
-        error!("notify-send not found. Notification skipped: {} - {}", summary, body);
+        error!(
+            "notify-send not found. Notification skipped: {} - {}",
+            summary, body
+        );
     }
 }
 
@@ -353,7 +387,10 @@ fn send_notification(summary: &str, body: &str) {
 pub fn process_man_output(output: String) -> String {
     let url_regex = regex::Regex::new(r"<(\bhttps?://[^\s>]+)>").unwrap();
     let with_links = url_regex.replace_all(&output, |caps: &regex::Captures| {
-        format!(r#"<a href="{}" class="man-link">{}</a>"#, &caps[1], &caps[1])
+        format!(
+            r#"<a href="{}" target="_blank"">{}</a>"#,
+            &caps[1], &caps[1]
+        )
     });
 
     let patterns = [
@@ -364,35 +401,37 @@ pub fn process_man_output(output: String) -> String {
     let mut result = with_links.to_string();
     for (pattern, class_name) in patterns.iter() {
         if let Ok(re) = regex::Regex::new(pattern) {
-            result = re.replace_all(&result, |caps: &regex::Captures| {
-                format!(r#"<span class="{}">{}</span>"#, class_name, &caps[0])
-            }).to_string();
+            result = re
+                .replace_all(&result, |caps: &regex::Captures| {
+                    format!(r#"<span class="{}">{}</span>"#, class_name, &caps[0])
+                })
+                .to_string();
         }
     }
-    
+
     result
 }
 
-fn read_man(cmd: &str)->Result<String, String>{
-    let max_chars:usize = 30000;
+fn read_man(cmd: &str) -> Result<String, String> {
+    let max_chars: usize = 30000;
     let output = Command::new("sh")
         .arg("-c")
         .arg(cmd)
         .output()
         .map_err(|e| format!("Failed read_man: {}", e))?;
-    
+
     // We combine stdout and stderr, since the help can be in any of them
     let result = if !output.stdout.is_empty() {
         let s = String::from_utf8_lossy(&output.stdout).to_string();
-         if s.chars().count() <= max_chars {
+        if s.chars().count() <= max_chars {
             s
-         }else{
+        } else {
             s.chars().take(max_chars).collect()
-         }
+        }
     } else {
         String::from_utf8_lossy(&output.stderr).to_string()
     };
-    
+
     Ok(result)
 }
 
