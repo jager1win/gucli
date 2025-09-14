@@ -53,10 +53,11 @@ pub struct LineLimitedFile {
 
 impl Write for LineLimitedFile {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        let message = String::from_utf8_lossy(buf).trim().to_string();
+        let mut new_content = String::from_utf8_lossy(buf).trim().to_string();
+        new_content.push('\n');
 
         // read content
-        let mut content = if self.path.exists() {
+        let content = if self.path.exists() {
             fs::read_to_string(&self.path)?
         } else {
             String::new()
@@ -64,16 +65,16 @@ impl Write for LineLimitedFile {
 
         // Adding a new entry with a line break
         if !content.is_empty() {
-            content.push('\n');
+            new_content.push_str(&content);
         }
-        content.push_str(&message);
+        //content.push_str(&message);
 
         // Truncating to max_lines
-        let lines: Vec<&str> = content.lines().collect();
+        let lines: Vec<&str> = new_content.lines().collect();
         let truncated = if lines.len() > self.max_lines {
             lines[lines.len() - self.max_lines..].join("\n")
         } else {
-            content
+            new_content
         };
 
         fs::write(&self.path, truncated)?;
