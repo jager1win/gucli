@@ -45,7 +45,6 @@ body{margin:0;clip-path: inset(0 round 1rem);overflow: visible;height: 100vh;
     justify-content: space-between;
     align-items: center;
     padding: 0.4rem 0.4rem;
-    user-select: none;
     border-bottom: 2px solid var(--g1);
     overflow: hidden;
 }
@@ -94,23 +93,14 @@ div.order button:disabled:hover{border-color:transparent;}
 .err-bg{background-color: var(--err);}
 .warn-bg{background-color: var(--warn);}
 .help summary{text-align: center;}
-input.erri {border:1px solid var(--err)}
 input::placeholder {color: var(--warn);}
+.text-bg{background-color: var(--gr2);padding: 1rem;border-radius: 0.4rem;}
 code,pre {background-color: var(--gr2);padding: 1rem;border-radius: 0.4rem;overflow: auto;font-size: inherit;}
 .tc{text-align: center;}
 .row {display: flex;justify-content:space-between;margin:0.4rem;}
 .row.head,.status{font-weight: bold;}
 
-.about{margin:2rem 0 0}
 a{color:var(--act)}
-.stt{
-  font-weight: 600;
-  text-decoration: underline;
-  text-decoration-style: dotted;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
-  color: inherit;
-}
 .status-block {transition: opacity 0.3s ease;}
 .status-block[data-update] {animation: fadeHighlight 1s;}
 .status-block.highlight {animation: status-highlight 1.2s ease;}
@@ -135,9 +125,6 @@ input,button {
 
 input{cursor: text;}
 button, input[type="checkbox"]{cursor: pointer;}
-
-.text-bg{background-color: var(--gr);border-radius: 0.4rem;}
-
 button.tabs-header{background-color: transparent;border:none;border-radius:0;border-bottom: 2px solid transparent;box-shadow: unset;}
 button.tabs-header.active{border-bottom: 2px solid var(--g2);color:var(--g2);font-weight: bold;}
 button.theme-switcher{background-color: transparent;border:none;border-radius:0;box-shadow: unset;}
@@ -145,7 +132,6 @@ button:hover {border-color: var(--act);}
 button:active {background-color: var(--mbc);}
 .man_form{display: flex;justify-content: center;}
 .man_form button{padding: 0 2rem;margin-left: 1rem;}
-.f8{border-radius: 0.4rem;font-family: system-ui, sans-serif;}
 .man_result{font-size: 0.9rem;padding: 1rem 1rem 2rem;white-space: pre-wrap;}
 .settings-help pre{font-size: 0.9rem;padding: 0.8rem;white-space: pre-wrap;}
 .man-uppercase {color:var(--t1)}

@@ -381,7 +381,6 @@ pub fn App() -> impl IntoView {
                                 <div class="row">
                                     <div class="order">
                                         <button
-                                            class="up"
                                             on:click=move |_| move_command(true, i.get())
                                             prop:disabled=move || i.get() == 0
                                         >
@@ -389,7 +388,6 @@ pub fn App() -> impl IntoView {
                                         </button>
                                         <span class="nn">{i}</span>
                                         <button
-                                            class="down"
                                             on:click=move |_| move_command(false, i.get())
                                             prop:disabled=move || i.get() == commands.get().len() - 1
                                         >
@@ -449,7 +447,7 @@ pub fn App() -> impl IntoView {
                         }}
                     </ForEnumerate>
 
-                    <div class="buttons bb">
+                    <div class="buttons">
                         <button class="ok-bg" on:click=move |_| add_command()>
                             "Add command"
                         </button>
@@ -539,13 +537,14 @@ pub fn Help() -> impl IntoView {
     });
     view! {
         <div class="help tc">
-            <p class="">
+            <p class="text-bg">
                 <h4>"Your personal command center in the system tray"</h4>
 
                 <p>
                     "Gucli (from GUI + CLI) is a simple system tray application"<br />
                     "that turns your frequent console commands into menu items for one-click launching."
-                    <br />Get rid of the routine of retyping them.<br />
+                </p>
+                <p class="err-text">
                     "⚠ Warning: Not a CLI replacement!"
                 </p>
 
@@ -573,7 +572,6 @@ pub fn Help() -> impl IntoView {
                     "For information on compatibility, dependencies, or to report issues, please visit the homepage."
                 </p>
             </p>
-
         </div>
     }
 }
