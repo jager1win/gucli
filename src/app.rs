@@ -60,17 +60,30 @@ extern "C" {
     async fn invoke(cmd: &str, args: JsValue) -> JsValue;
 }
 
-static SETTINGS_HELP: &str = "<span>Critical settings information:<br />
-• Option 1 - affects performance<br />
-• Option 2 - changes behavior<br />
-• Reset button - reverts to defaults<br />
-For details see full documentation.</span>";
+static SETTINGS_HELP: &str = "
+<ul>
+    <li>Executes shell commands that return nothing or string-convertible output</li>
+    <li>Edit commands in: <code>~/.config/gucli/commands.toml</code> (restart required)</li>
+    <li>Examples: <code>~/.config/gucli/example.commands.toml</code></li>
+    <li>Logs: <code>~/.config/gucli/gucli.log</code> (100 lines, no rotation)</li>
+    <li>Avoid interactive/long-running commands</li>
+    <li>Timeout: 500ms (use <code>&</code> to bypass)</li>
+    <li>Notifications limited to 200 chars</li>
+    <li>Long commands should be scripts</li>
+    <li>icon: ≤8 UTF-8 chars (emoji/text/empty)</li>
+    <li>sn: show notification (default: true)</li>
+    <li>Always test commands first</li>
+</ul>
+";
 
-static SEARCH_HELP: &str = "If you need an exact reference with specific attributes, write it in full.<br />
-    Otherwise, the program will iterate through this set:<br />
-    [ --help, -h, --usage, help, -help, -?, --longhelp, --long-help, --help-all, info]<br />
-    then check the man pages, and return the first matching option found.<br />
-    To prevent the window from freezing, the maximum result length is limited to 30,000 characters.";
+static SEARCH_HELP: &str = "
+<ul>
+    <li>If you need an exact reference with specific attributes, write it in full</li>
+    <li>Otherwise, the program will iterate through this set:<br />
+    <code>[ --help, -h, --usage, help, -help, -?, --longhelp, --long-help, --help-all, info]</code><br />
+    then check the man pages, and return the first matching option found.</li>
+    <li>To prevent the window from freezing, the maximum result length is limited to 30,000 characters</li>
+</ul>";
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -461,7 +474,11 @@ pub fn App() -> impl IntoView {
                     </div>
                 </div>
 
-                <div class="text-bg" inner_html=SETTINGS_HELP></div>
+                <details>
+                    <summary>Help</summary>
+                    <div class="text-bg" inner_html=SETTINGS_HELP></div>
+                </details>
+
             </div>
             <div hidden=move || active_tab.get() != 1>
                 <ManSearch />
@@ -515,11 +532,13 @@ pub fn ManSearch() -> impl IntoView {
             </button>
         </form>
 
-        <div class="text-bg">
-            <span inner_html=SEARCH_HELP hidden=move || { !man.get().is_empty() } ></span>
-        </div>
+        <div class="text-bg" inner_html=SEARCH_HELP hidden=move || { !man.get().is_empty() }></div>
 
-        <pre class="man_result" inner_html=move || man.get()  hidden=move || { man.get().is_empty() }></pre>
+        <pre
+            class="man_result"
+            inner_html=move || man.get()
+            hidden=move || { man.get().is_empty() }
+        ></pre>
     }
 }
 

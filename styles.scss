@@ -93,8 +93,9 @@ div.order button:disabled:hover{border-color:transparent;}
 .warn-bg{background-color: var(--warn);}
 .help summary{text-align: center;}
 input::placeholder {color: var(--warn);}
-.text-bg{background-color: var(--gr2);padding: 0.6rem;margin: 0.6rem;border-radius: 0.4rem;line-height: 2;}
-code,pre {background-color: var(--gr2);padding: 1rem;border-radius: 0.4rem;overflow: auto;font-size: inherit;}
+.text-bg{background-color: var(--gr2);padding: 0.6rem;margin: 0.6rem;border-radius: 0.4rem;}
+.text-bg code{color:var(--t1)}
+pre {background-color: var(--gr2);padding: 1rem;border-radius: 0.4rem;overflow: auto;font-size: inherit;}
 .tc{text-align: center;}
 .row {display: flex;justify-content:space-between;margin:0.4rem;}
 .row.head,.status{font-weight: bold;}
