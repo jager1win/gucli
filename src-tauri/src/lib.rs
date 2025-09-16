@@ -34,18 +34,7 @@ fn get_man(cmd: &str) -> Result<String, String> {
     const MIN_HELP_LENGTH: usize = 50; // Minimum length for valid help output (short outputs are considered errors)
 
     // Flags that should be executed as-is (with their original formatting)
-    let help_flags = [
-        " --help",
-        " -h",
-        " --usage",
-        " help",
-        " -help",
-        " -?",
-        " --longhelp",
-        " --long-help",
-        " --help-all",
-        " info",
-    ];
+    let help_flags = [" --help", " -h", " --usage", " help", " -help", " -?", " --longhelp", " --long-help", " --help-all", " info"];
 
     // Read & return exactly as entered when help flags are present
     if help_flags.iter().any(|&flag| cmd.contains(flag)) {
@@ -372,7 +361,7 @@ fn send_notification(summary: &str, body: &str) {
         let _ = Command::new("notify-send")
             .arg(summary)
             .arg(body)
-            .arg("--app-name=gucli-tray")
+            .arg("--app-name=gucli")
             .arg("--icon=system")
             .status();
     } else {

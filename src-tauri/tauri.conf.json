@@ -30,8 +30,8 @@
     "category": "Utility",
     "licenseFile":"../LICENSE",
     "license": "GPL-3.0+",
-    "shortDescription": "Gucli - Your personal command line menu",
-    "longDescription": "Gucli (from GUI + CLI) is a simple system tray application that turns your frequent console commands into menu items for one-click launching. Get rid of the routine of retyping them.",
+    "shortDescription": "Your personal command center in the system tray",
+    "longDescription": "Gucli (from GUI + CLI) is a simple system tray application that turns your frequent console commands into menu items for one-click launching.",
     "homepage": "https://github.com/jager1win/gucli",
     "icon": [
       "icons/16x16.png",
@@ -47,12 +47,16 @@
       "deb": {
         "files": {},
         "depends": [
+          "libnotify-bin",
+          "libayatana-appindicator-glib | libayatana-appindicator3-1 | libkf5notifications5"
         ]
       },
       "rpm": {
         "epoch": 0,
         "files": {},
         "depends": [
+          "libnotify-bin",
+          "ayatana-appindicator3 | libappindicator-gtk3 | kf5-knotifications"
         ]
       }
     }

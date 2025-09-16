@@ -60,14 +60,17 @@ extern "C" {
     async fn invoke(cmd: &str, args: JsValue) -> JsValue;
 }
 
-static SETTINGS_HELP: &str = r#"Critical settings information:
+static SETTINGS_HELP: &str = "<span>Critical settings information:<br />
+• Option 1 - affects performance<br />
+• Option 2 - changes behavior<br />
+• Reset button - reverts to defaults<br />
+For details see full documentation.</span>";
 
-• Option 1 - affects performance
-• Option 2 - changes behavior
-• Reset button - reverts to defaults
-
-For details see full documentation.
-"#;
+static SEARCH_HELP: &str = "If you need an exact reference with specific attributes, write it in full.<br />
+    Otherwise, the program will iterate through this set:<br />
+    [ --help, -h, --usage, help, -help, -?, --longhelp, --long-help, --help-all, info]<br />
+    then check the man pages, and return the first matching option found.<br />
+    To prevent the window from freezing, the maximum result length is limited to 30,000 characters.";
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -360,7 +363,8 @@ pub fn App() -> impl IntoView {
                     <ForEnumerate
                         each=move || commands.get()
                         key=|command| command.id.to_string() + &command.command
-                        let(i,command)
+                        let(i,
+                        command)
                     >
                         {move || {
                             let (com, set_com) = signal(command.command.clone());
@@ -397,8 +401,8 @@ pub fn App() -> impl IntoView {
                                     <input
                                         type="text"
                                         placeholder="Danger zone! Verify commands before adding..."
-                                        value=move || com.get()
-                                        on:input=move |ev| {
+                                        prop:value=move || com.get()
+                                        on:change=move |ev| {
                                             set_com.set(event_target_value(&ev));
                                             sync_to_buffer();
                                         }
@@ -409,8 +413,8 @@ pub fn App() -> impl IntoView {
                                             placeholder="8 chars"
                                             size="8"
                                             maxlength="8"
-                                            value=move || icon.get()
-                                            on:input=move |ev| {
+                                            prop:value=move || icon.get()
+                                            on:change=move |ev| {
                                                 set_icon.set(event_target_value(&ev));
                                                 sync_to_buffer();
                                             }
@@ -419,7 +423,7 @@ pub fn App() -> impl IntoView {
                                     <div class="chb">
                                         <input
                                             type="checkbox"
-                                            checked=move || sn.get()
+                                            prop:checked=move || sn.get()
                                             on:change=move |ev| {
                                                 set_sn.set(event_target_checked(&ev));
                                                 sync_to_buffer();
@@ -457,15 +461,13 @@ pub fn App() -> impl IntoView {
                     </div>
                 </div>
 
-                <div class="settings-help">
-                    <pre inner_html=SETTINGS_HELP></pre>
-                </div>
+                <div class="text-bg" inner_html=SETTINGS_HELP></div>
             </div>
             <div hidden=move || active_tab.get() != 1>
                 <ManSearch />
             </div>
             <div hidden=move || active_tab.get() != 2>
-                <Help />
+                <About />
             </div>
         </main>
     }
@@ -474,8 +476,7 @@ pub fn App() -> impl IntoView {
 #[component]
 pub fn ManSearch() -> impl IntoView {
     use leptos::{ev::SubmitEvent};
-    static HELP: &str = " Enter the command to search for reference information on it.\n\n For specific flags like --longhelp, type the full command.\n\n The maximum output length is limited to 30,000 characters.";
-    let (man, set_man) = signal(HELP.to_string());
+    let (man, set_man) = signal(String::new());
     let (input_value, set_input_value) = signal("".to_string());
 
     let on_submit = move |ev: SubmitEvent| {
@@ -484,7 +485,7 @@ pub fn ManSearch() -> impl IntoView {
         set_input_value.set(trimmed_value.clone());
 
         if trimmed_value.is_empty() {
-            set_man.set(HELP.to_string());
+            set_man.set(SEARCH_HELP.to_string());
         } else {
             spawn_local(async move {
                 let args = to_value(&ManHelp {cmd: trimmed_value}).unwrap();
@@ -497,12 +498,6 @@ pub fn ManSearch() -> impl IntoView {
             });
         }
     };
-
-    Effect::new(move |_| {
-        if input_value.get().is_empty() {
-            set_man.set(HELP.to_string());
-        }
-    });
 
     view! {
         <h4 class="tc">"Get console help with command: man or built-in --help"</h4>
@@ -520,12 +515,16 @@ pub fn ManSearch() -> impl IntoView {
             </button>
         </form>
 
-        <pre class="man_result" inner_html=move || man.get()></pre>
+        <div class="text-bg">
+            <span inner_html=SEARCH_HELP hidden=move || { !man.get().is_empty() } ></span>
+        </div>
+
+        <pre class="man_result" inner_html=move || man.get()  hidden=move || { man.get().is_empty() }></pre>
     }
 }
 
 #[component]
-pub fn Help() -> impl IntoView { 
+pub fn About() -> impl IntoView { 
     let (info, set_info) = signal(Vec::<String>::new());
     Effect::new(move |_| {
         spawn_local(async move {
@@ -544,9 +543,7 @@ pub fn Help() -> impl IntoView {
                     "Gucli (from GUI + CLI) is a simple system tray application"<br />
                     "that turns your frequent console commands into menu items for one-click launching."
                 </p>
-                <p class="err-text">
-                    "⚠ Warning: Not a CLI replacement!"
-                </p>
+                <p class="err-text">"⚠ Warning: Not a CLI replacement!"</p>
 
                 {move || {
                     info.get()
