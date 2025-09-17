@@ -63,7 +63,7 @@ body{margin:0;clip-path: inset(0 round 1rem);overflow: visible;height: 100vh;
 .container {margin: 0;padding:0.1rem 1rem 0;display: block;overflow-y: auto;background-color: var(--mbc);height: 90vh;
 border-radius: 0 0 0.8rem 0.8rem;}
 
-.commands.form > div.row{display: grid;grid-template-columns: 1fr 3fr 2fr 1fr 2fr 2fr; text-align: center;align-items: center;}
+.commands.form > div.row{display: grid;grid-template-columns: 1fr 4fr 2fr 1fr 1fr 1fr; text-align: center;align-items: center;}
 .commands.form div.chb{display:flex;justify-items: center;justify-content: center;}
 .topline{display:inline-flex; width: 100%;align-items: center; justify-content: space-evenly;height: 3rem;}
 .topline>button{min-width: 9rem;}
@@ -124,7 +124,7 @@ input,button {
 }
 
 input{cursor: text;}
-button, input[type="checkbox"]{cursor: pointer;}
+button, input[type="checkbox"], details{cursor: pointer;}
 button.tabs-header{background-color: transparent;border:none;border-radius:0;border-bottom: 2px solid transparent;box-shadow: unset;}
 button.tabs-header.active{border-bottom: 2px solid var(--g2);color:var(--g2);font-weight: bold;}
 button.theme-switcher{background-color: transparent;border:none;border-radius:0;box-shadow: unset;}
