@@ -76,7 +76,7 @@ border-radius: 0 0 0.8rem 0.8rem;}
 .status-block{white-space: pre-wrap;width: max-content;min-height:3rem;padding: 0 0.4rem;overflow: hidden auto;max-height: 4rem;overflow-wrap: break-word;hyphens: auto;width: 100%;}
 .ttime{color:var(--mc-2);}
 .iicon input{text-align: center;}
-div.buttons{display: flex; justify-content: space-evenly;border-top: 1px solid var(--mc-2);padding-top:0.6rem;margin-top:0.8rem;}
+div.buttons{display: grid;grid-template-columns:1fr 1fr 1fr;align-items: center;border-top: 1px solid var(--mc-2);padding:0.6rem 10%;margin:0.8rem 0;}
 h5{cursor:default}
 div.order{display: flex;position: relative;justify-content: center;align-items: center;}
 div.order .nn{font-size: 1.4rem;color: var(--g2);}
@@ -127,7 +127,7 @@ input{cursor: text;}
 button, input[type="checkbox"], details{cursor: pointer;}
 button.tabs-header{background-color: transparent;border:none;border-radius:0;border-bottom: 2px solid transparent;box-shadow: unset;}
 button.tabs-header.active{border-bottom: 2px solid var(--g2);color:var(--g2);font-weight: bold;}
-button.theme-switcher{background-color: transparent;border:none;border-radius:0;box-shadow: unset;}
+button.theme-switcher{background-color: transparent;border:none;border-radius:0;box-shadow: unset;margin-left: 2rem;}
 button:hover {border-color: var(--act);}
 button:active {background-color: var(--mbc);}
 .man_form{display: flex;justify-content: center;}

@@ -95,6 +95,7 @@ pub fn App() -> impl IntoView {
     let (autostart, set_autostart) = signal(false);
     let (is_maximized, set_is_maximized) = signal("max0");
     let (reset, set_reset) = signal(false);
+    let unsaved_changes = RwSignal::new("");
     
     //+ init commands on open window
     let init = move || {spawn_local(async move {
@@ -174,7 +175,7 @@ pub fn App() -> impl IntoView {
         if index < buf.len() {
             buf.remove(index);
             set_commands.update(move |b| *b = buf.clone());
-            set_status.set("Warning( After editing the list, save the settings )".to_string());
+            set_status.set("Ok( Command deleted )".to_string());
         }
     };
 
@@ -268,24 +269,21 @@ pub fn App() -> impl IntoView {
         status.track();
         set_ttime.set(Local::now().format("%Y-%m-%d %H:%M:%S.%3f").to_string());
         set_highlight.set(true);
-        set_timeout(move || set_highlight.set(false), std::time::Duration::from_millis(500));
-        log::debug!("effect save->commands: {:?}", commands.get());
+        set_timeout(move || set_highlight.set(false), std::time::Duration::from_millis(300));
+        log::debug!("effect 1 status: {:?}", status.get());
     });
 
-    // adds a line about unsaved changes to the status
+    // compare commands0 != commands & adds a line about unsaved changes to the unsaved_changes
     Effect::new(move |_| {
         commands.track();
-        let has_unsaved_changes = commands0.get() != commands.get();
-        let current_status = status.get_untracked();
-        
-        if has_unsaved_changes && !current_status.contains("Unsaved changes") {
-            set_status.set(format!("{} \n<span class='err-text'>Unsaved changes - Save & Restart!</span>", current_status));
-        }
+        if commands0.get() != commands.get(){
+            unsaved_changes.set("Unsaved changes")
+        }else{ unsaved_changes.set("")}
     });
 
     view! {
         <div data-tauri-drag-region class="titlebar">
-            <div class="titlebar-title">"$_"</div>
+            <div class="titlebar-title">"$_" <ThemeToggle /></div>
             <button
                 class:active=move || active_tab.get() == 0
                 class="tabs-header"
@@ -307,7 +305,7 @@ pub fn App() -> impl IntoView {
             >
                 "About"
             </button>
-            <ThemeToggle />
+            
 
             <div class="titlebar-controls">
                 <button on:click=move |_| ctrl_window("min") id="titlebar-minimize">
@@ -392,6 +390,7 @@ pub fn App() -> impl IntoView {
                                         }
                                     });
                             };
+
                             // When any local signal changes, we push the changes
                             view! {
                                 <div class="row">
@@ -463,13 +462,14 @@ pub fn App() -> impl IntoView {
                         }}
                     </ForEnumerate>
 
-                    <div class="buttons">
-                        <button class="ok-bg" on:click=move |_| add_command()>
+                    <div class="buttons tc">
+                        <div><button class="ok-bg" on:click=move |_| add_command()>
                             "Add command"
-                        </button>
-                        <button class="ok-bg" on:click=move |_| save(commands.get())>
+                        </button></div>
+                        <span class="warn-text tc" inner_html=unsaved_changes></span>
+                        <div><button class="ok-bg" on:click=move |_| save(commands.get())>
                             "Save & Restart"
-                        </button>
+                        </button></div>
                     </div>
                 </div>
 
