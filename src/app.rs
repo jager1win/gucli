@@ -60,24 +60,23 @@ extern "C" {
     async fn invoke(cmd: &str, args: JsValue) -> JsValue;
 }
 
-static SETTINGS_HELP: &str = "
-<ul>
-    <li>Executes shell commands that return nothing or string-convertible output</li>
-    <li>Edit commands in: <code>~/.config/gucli/commands.toml</code> (restart required)</li>
-    <li>Examples: <code>~/.config/gucli/example.commands.toml</code></li>
-    <li>Logs: <code>~/.config/gucli/gucli.log</code> (100 lines, no rotation)</li>
-    <li>Avoid interactive/long-running commands</li>
-    <li>Timeout: 500ms (use <code>&</code> to bypass)</li>
-    <li>Notifications limited to 200 chars</li>
-    <li>Long commands should be scripts</li>
-    <li>icon: ≤8 UTF-8 chars (emoji/text/empty)</li>
-    <li>sn: show notification (default: true)</li>
-    <li>Always test commands first</li>
-</ul>
-";
+static SETTINGS_HELP: &str = 
+"<ul>
+    <li>Program executes shell commands that return either nothing or string-convertible output</li>
+    <li>Command settings can be edited in <code>/home/$USER/.config/gucli/commands.toml</code> without opening this window (restart required)</li>
+    <li>Example commands are saved in <code>/home/$USER/.config/gucli/example.commands.toml</code></li>
+    <li>Errors and results are logged to <code>/home/$USER/.config/gucli/gucli.log</code> (100 line limit, no rotation needed)</li>
+    <li>Interactive commands or commands with continuous output are not recommended</li>
+    <li>Command execution timeout: 500ms (add <code>&</code> to bypass)</li>
+    <li>Notification text limited to 200 characters (long messages may freeze GTK)</li>
+    <li>Commands in tray menu display as-is - use shell scripts for long entries</li>
+    <li>icon: up to 8 UTF-8 characters (emoji, short text, or empty)</li>
+    <li>sn (show notification): show system notification (default: true). Error notifications always show</li>
+    <li>Always test commands first, even if you know what you're doing</li>
+</ul>";
 
-static SEARCH_HELP: &str = "
-<ul>
+static SEARCH_HELP: &str = 
+"<ul>
     <li>If you need an exact reference with specific attributes, write it in full</li>
     <li>Otherwise, the program will iterate through this set:<br />
     <code>[ --help, -h, --usage, help, -help, -?, --longhelp, --long-help, --help-all, info]</code><br />
@@ -502,7 +501,7 @@ pub fn ManSearch() -> impl IntoView {
         set_input_value.set(trimmed_value.clone());
 
         if trimmed_value.is_empty() {
-            set_man.set(SEARCH_HELP.to_string());
+            set_man.set("".to_string());
         } else {
             spawn_local(async move {
                 let args = to_value(&ManHelp {cmd: trimmed_value}).unwrap();
@@ -532,13 +531,16 @@ pub fn ManSearch() -> impl IntoView {
             </button>
         </form>
 
-        <div class="text-bg" inner_html=SEARCH_HELP hidden=move || { !man.get().is_empty() }></div>
-
         <pre
             class="man_result"
             inner_html=move || man.get()
             hidden=move || { man.get().is_empty() }
         ></pre>
+
+        <details>
+            <summary>Help</summary>
+            <div class="text-bg" inner_html=SEARCH_HELP></div>
+        </details>
     }
 }
 
