@@ -86,19 +86,20 @@ static SEARCH_HELP: &str =
 
 #[component]
 pub fn App() -> impl IntoView {
-    let (active_tab, set_active_tab) = signal(0);
     let (commands0, set_commands0) = signal(Vec::<Command>::new());
     let (commands, set_commands) = signal(Vec::<Command>::new());
-    let (status, set_status) = signal(String::from(""));
-    let (ttime, set_ttime) = signal(String::from(""));
-    let (highlight, set_highlight) = signal(false);
-    let (autostart, set_autostart) = signal(false);
     let (is_maximized, set_is_maximized) = signal("max0");
-    let (reset, set_reset) = signal(false);
+    let (autostart, set_autostart) = signal(false);
+    let (status, set_status) = signal(String::from(""));
+
+    let reset = RwSignal::new(false);
+    let active_tab = RwSignal::new(0);
     let unsaved_changes = RwSignal::new("");
+    let highlight = RwSignal::new(false);
+    let ttime = RwSignal::new(String::from(""));
     
     //+ init commands on open window
-    let init = move || {spawn_local(async move {
+    spawn_local(async move {
         let js_value = invoke_without_args("get_commands").await;
         let res: Result<Vec<Command>, String> =
             from_value(js_value).map_err(|e| format!("deserialize failed: {e}"));
@@ -107,8 +108,7 @@ pub fn App() -> impl IntoView {
             Ok(new_commands) => {set_commands.set(new_commands.clone());set_commands0.set(new_commands);},
             Err(e) => set_status.set(e),
         }
-    })};
-    init();
+    });
 
     //+ Save (check for uniqueness/non-emptiness of names and, if everything is ok, write it to commands & save to commands.toml)
     let save = move |buf: Vec<Command>| {
@@ -143,7 +143,7 @@ pub fn App() -> impl IntoView {
     //+ reset commands.toml to default
     let reset_commands = move || {
         if !reset.get(){
-            set_reset.set(true);
+            reset.set(true);
             set_status.set("Warn( Click again to reset )".to_string());
         }else{
             spawn_local(async move {
@@ -251,9 +251,9 @@ pub fn App() -> impl IntoView {
     // monitored status changes update the time of the last operation
     Effect::new(move |_| {
         status.track();
-        set_ttime.set(Local::now().format("%Y-%m-%d %H:%M:%S.%3f").to_string());
-        set_highlight.set(true);
-        set_timeout(move || set_highlight.set(false), std::time::Duration::from_millis(300));
+        ttime.set(Local::now().format("%Y-%m-%d %H:%M:%S.%3f").to_string());
+        highlight.set(true);
+        set_timeout(move || highlight.set(false), std::time::Duration::from_millis(300));
         log::debug!("effect 1 status: {:?}", status.get());
     });
 
@@ -271,21 +271,21 @@ pub fn App() -> impl IntoView {
             <button
                 class:active=move || active_tab.get() == 0
                 class="tabs-header"
-                on:click=move |_| set_active_tab.set(0)
+                on:click=move |_| active_tab.set(0)
             >
                 "Settings"
             </button>
             <button
                 class:active=move || active_tab.get() == 1
                 class="tabs-header"
-                on:click=move |_| set_active_tab.set(1)
+                on:click=move |_| active_tab.set(1)
             >
                 "Find help || man"
             </button>
             <button
                 class:active=move || active_tab.get() == 2
                 class="tabs-header"
-                on:click=move |_| set_active_tab.set(2)
+                on:click=move |_| active_tab.set(2)
             >
                 "About"
             </button>
