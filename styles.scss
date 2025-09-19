@@ -63,7 +63,7 @@ body{margin:0;clip-path: inset(0 round 1rem);overflow: visible;height: 100vh;
 .container {margin: 0;padding:0.1rem 1rem 0;display: block;overflow-y: auto;background-color: var(--mbc);height: 90vh;
 border-radius: 0 0 0.8rem 0.8rem;}
 
-.commands.form > div.row{display: grid;grid-template-columns: 1fr 4fr 2fr 1fr 1fr 1fr; text-align: center;align-items: center;}
+.commands.form > div.row{display: grid;grid-template-columns: 1fr 4fr 1fr 1fr 1fr 1fr; text-align: center;align-items: center;}
 .commands.form div.chb{display:flex;justify-items: center;justify-content: center;}
 .topline{display:inline-flex; width: 100%;align-items: center; justify-content: space-evenly;height: 3rem;}
 .topline>button{min-width: 9rem;}
@@ -75,7 +75,7 @@ border-radius: 0 0 0.8rem 0.8rem;}
 .status > div:nth-child(3){overflow: auto;display: flex;overflow: overlay;scrollbar-gutter: stable;}
 .status-block{white-space: pre-wrap;width: max-content;min-height:3rem;padding: 0 0.4rem;overflow: hidden auto;max-height: 4rem;overflow-wrap: break-word;hyphens: auto;width: 100%;}
 .ttime{color:var(--mc-2);}
-.iicon input{text-align: center;}
+.iicon{text-align: center;margin:0 1rem;}
 div.buttons{display: grid;grid-template-columns:1fr 1fr 1fr;align-items: center;border-top: 1px solid var(--mc-2);padding:0.6rem 10%;margin:0.8rem 0;}
 h5{cursor:default}
 div.order{display: flex;position: relative;justify-content: center;align-items: center;}
@@ -133,7 +133,6 @@ button:active {background-color: var(--mbc);}
 .man_form{display: flex;justify-content: center;}
 .man_form button{padding: 0 2rem;margin-left: 1rem;}
 .man_result{font-size: 0.9rem;padding: 1rem 1rem 2rem;white-space: pre-wrap;}
-.settings-help pre{font-size: 0.9rem;padding: 0.8rem;white-space: pre-wrap;}
 .man-uppercase {color:var(--t1)}
 .man-dash {color:var(--t2)}
 .man-uppercase, .man-dash{font-weight: 900;}

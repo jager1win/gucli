@@ -14,7 +14,7 @@ use std::time::{Duration, Instant};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserCommand {
-    pub id: usize,
+    pub id: String,
     pub command: String,
     pub icon: String,
     pub sn: bool,

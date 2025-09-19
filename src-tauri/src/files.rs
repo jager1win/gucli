@@ -5,6 +5,7 @@ use std::io::{self, Write};
 use std::path::PathBuf;
 use tracing::error;
 use tracing_subscriber::fmt::writer::MakeWriter;
+use uuid::Uuid;
 
 pub const COMMANDS_FILE: &str = ".config/gucli/commands.toml";
 pub const LOG_FILE: &str = ".config/gucli/gucli.log";
@@ -169,9 +170,8 @@ pub fn load_commands() -> Result<crate::AppCommandsConfig, Box<dyn std::error::E
     let commands_with_id = toml_config
         .commands
         .into_iter()
-        .enumerate()
-        .map(|(id, toml_cmd)| crate::UserCommand {
-            id,
+        .map(|toml_cmd| crate::UserCommand {
+            id: Uuid::new_v4().to_string(),
             command: toml_cmd.command,
             icon: toml_cmd.icon,
             sn: toml_cmd.sn,

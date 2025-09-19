@@ -7,7 +7,7 @@ use chrono::Local;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Command {
-    pub id: usize,
+    pub id: String,
     pub command: String,
     pub icon: String,
     pub sn: bool,
@@ -20,7 +20,7 @@ pub struct CommandsConfig {
 }
 
 impl Command {
-    pub fn new(id: usize) -> Self {
+    pub fn new(id: String) -> Self {
         Command {
             id,
             command: String::from("new"),
@@ -162,9 +162,8 @@ pub fn App() -> impl IntoView {
 
     //+ Add a new row with default values
     let add_command = move || {
-        let new_id = commands.get().len();
         let mut buf = commands.get();
-        buf.push(Command::new(new_id));
+        buf.push(Command::new(gen_id()));
         set_commands.update(move |b| *b = buf.clone());
         set_status.set("Warning( Specify the command and its parameters and test it )".to_string());
     };
@@ -241,27 +240,12 @@ pub fn App() -> impl IntoView {
     };
  
     //+ move command in vec - up & down id
-    let move_command = {
-        fn move_by(commands: &mut [Command], id: usize, dir: isize) {
-            if commands.is_empty() { return; }
-            let len = commands.len() as isize;
-            let pos = id as isize;
-            let new_pos = pos + dir;
-            if new_pos >= 0 && new_pos < len {
-                commands.swap(pos as usize, new_pos as usize);
-                for (new_id, cmd) in commands.iter_mut().enumerate() {
-                    cmd.id = new_id;
-                }
-            }
-        }
-
-        move |up: bool, current_id: usize| {
-            set_commands.update(|cmds| {
-                let dir = if up { -1 } else { 1 };
-                move_by(cmds, current_id, dir);
-            });
-            set_status.set("Ok( Order updated )".to_string());
-        }
+    let move_command = move |up: bool,n:usize| {
+        let mut buf = commands.get();
+        let dir = if up { n-1 } else { n+1 };
+        buf.swap(dir, n);
+        set_commands.set(buf);
+        set_status.set("Ok( Order updated )".to_string());
     };
 
     // monitored status changes update the time of the last operation
@@ -305,7 +289,6 @@ pub fn App() -> impl IntoView {
             >
                 "About"
             </button>
-            
 
             <div class="titlebar-controls">
                 <button on:click=move |_| ctrl_window("min") id="titlebar-minimize">
@@ -372,104 +355,94 @@ pub fn App() -> impl IntoView {
 
                     <ForEnumerate
                         each=move || commands.get()
-                        key=|command| command.id.to_string() + &command.command
+                        key=|command| command.id.clone()
                         let(i,
                         command)
                     >
-                        {move || {
-                            let (com, set_com) = signal(command.command.clone());
-                            let (icon, set_icon) = signal(command.icon.clone());
-                            let (sn, set_sn) = signal(command.sn);
-                            let sync_to_buffer = move || {
-                                set_commands
-                                    .update(|buf| {
-                                        if let Some(slot) = buf.get_mut(i.get()) {
-                                            slot.command = com.get();
-                                            slot.icon = icon.get();
-                                            slot.sn = sn.get();
-                                        }
-                                    });
-                            };
-
-                            // When any local signal changes, we push the changes
-                            view! {
-                                <div class="row">
-                                    <div class="order">
-                                        <button
-                                            on:click=move |_| move_command(true, i.get())
-                                            prop:disabled=move || i.get() == 0
-                                        >
-                                            "↑"
-                                        </button>
-                                        <span class="nn">{i}</span>
-                                        <button
-                                            on:click=move |_| move_command(false, i.get())
-                                            prop:disabled=move || i.get() == commands.get().len() - 1
-                                        >
-                                            "↓"
-                                        </button>
-                                    </div>
-                                    <input
-                                        type="text"
-                                        placeholder="Danger zone! Verify commands before adding..."
-                                        prop:value=move || com.get()
-                                        on:change=move |ev| {
-                                            set_com.set(event_target_value(&ev));
-                                            sync_to_buffer();
-                                        }
-                                    />
-                                    <div class="iicon">
-                                        <input
-                                            type="text"
-                                            placeholder="8 chars"
-                                            size="8"
-                                            maxlength="8"
-                                            prop:value=move || icon.get()
-                                            on:change=move |ev| {
-                                                set_icon.set(event_target_value(&ev));
-                                                sync_to_buffer();
-                                            }
-                                        />
-                                    </div>
-                                    <div class="chb">
-                                        <input
-                                            type="checkbox"
-                                            prop:checked=move || sn.get()
-                                            on:change=move |ev| {
-                                                set_sn.set(event_target_checked(&ev));
-                                                sync_to_buffer();
-                                            }
-                                        />
-                                    </div>
-                                    <div>
-                                        <button
-                                            on:click=move |_| delete_command(i.get())
-                                            class="err-bg"
-                                        >
-                                            "Delete"
-                                        </button>
-                                    </div>
-                                    <div>
-                                        <button
-                                            on:click=move |_| run_test(commands.get()[i.get()].clone())
-                                            class="warn-bg"
-                                        >
-                                            "Run test"
-                                        </button>
-                                    </div>
-                                </div>
-                            }
-                        }}
+                        <div class="row">
+                            <div class="order">
+                                <button
+                                    on:click=move |_| move_command(true, i.get())
+                                    prop:disabled=move || i.get() == 0
+                                >
+                                    "↑"
+                                </button>
+                                <span class="nn">{i}</span>
+                                <button
+                                    on:click=move |_| move_command(false, i.get())
+                                    prop:disabled=move || i.get() == commands.get().len() - 1
+                                >
+                                    "↓"
+                                </button>
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="Danger zone! Verify commands before adding..."
+                                value=move || command.command.clone()
+                                on:input=move |ev| {
+                                    let value = event_target_value(&ev);
+                                    set_commands
+                                        .update(|cmds| {
+                                            cmds[i.get()].command = value;
+                                        });
+                                }
+                            />
+                            <input
+                                class="iicon"
+                                type="text"
+                                placeholder="8 chars"
+                                size="8"
+                                maxlength="8"
+                                value=move || command.icon.clone()
+                                on:input=move |ev| {
+                                    let value = event_target_value(&ev);
+                                    set_commands
+                                        .update(|cmds| {
+                                            cmds[i.get()].icon = value;
+                                        });
+                                }
+                            />
+                            <div class="chb">
+                                <input
+                                    type="checkbox"
+                                    checked=move || command.sn
+                                    on:change=move |ev| {
+                                        let checked = event_target_checked(&ev);
+                                        set_commands
+                                            .update(|cmds| {
+                                                cmds[i.get()].sn = checked;
+                                            });
+                                    }
+                                />
+                            </div>
+                            <div>
+                                <button on:click=move |_| delete_command(i.get()) class="err-bg">
+                                    "Delete"
+                                </button>
+                            </div>
+                            <div>
+                                <button
+                                    on:click=move |_| run_test(commands.get()[i.get()].clone())
+                                    class="warn-bg"
+                                >
+                                    "Run test"
+                                </button>
+                            </div>
+                        </div>
                     </ForEnumerate>
 
                     <div class="buttons tc">
-                        <div><button class="ok-bg" on:click=move |_| add_command()>
-                            "Add command"
-                        </button></div>
+                        <div>
+                            <button class="ok-bg" on:click=move |_| add_command()>
+                                "Add command"
+                            </button>
+                        </div>
                         <span class="warn-text tc" inner_html=unsaved_changes></span>
-                        <div><button class="ok-bg" on:click=move |_| save(commands.get())>
-                            "Save & Restart"
-                        </button></div>
+                        <div>
+                            <button class="ok-bg" on:click=move |_| save(commands.get())>
+                                "Save & Restart"
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -657,4 +630,10 @@ pub fn ThemeToggle() -> impl IntoView {
             {move || if theme.get() == "light" { "🌙" } else { "🌞" }}
         </button>
     }
+}
+
+fn gen_id() -> String {
+    Local::now().timestamp_nanos_opt()
+        .unwrap_or(0)
+        .to_string()
 }
