@@ -21,7 +21,6 @@ pub struct TomlCommand {
 // Configuration for TOML
 #[derive(Serialize, Deserialize)]
 pub struct CommandsConfig {
-    #[serde(rename = "commands")]
     pub commands: Vec<TomlCommand>,
 }
 

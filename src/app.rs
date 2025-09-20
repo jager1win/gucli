@@ -13,12 +13,6 @@ pub struct Command {
     pub sn: bool,
 }
 
-#[derive(Default, Debug, Serialize, Deserialize)]
-pub struct CommandsConfig {
-    #[serde(rename = "command")]
-    pub commands: Vec<Command>,
-}
-
 impl Command {
     pub fn new(id: String) -> Self {
         Command {
