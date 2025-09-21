@@ -63,7 +63,7 @@ static SETTINGS_HELP: &str =
     <li>Interactive commands or commands with continuous output are not recommended</li>
     <li>Command execution timeout: 500ms (add <code>&</code> to bypass)</li>
     <li>Notification text limited to 200 characters (long messages may freeze GTK)</li>
-    <li>Commands in tray menu display as-is - use shell scripts for long entries</li>
+    <li>Commands in tray menu display as-is - use <code>aliases</code> or shell scripts for long entries</li>
     <li>icon: up to 8 UTF-8 characters (emoji, short text, or empty)</li>
     <li>sn (show notification): show system notification (default: true). Error notifications always show</li>
     <li>Always test commands first, even if you know what you're doing</li>
