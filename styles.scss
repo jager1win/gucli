@@ -124,7 +124,8 @@ input,button {
 }
 
 input{cursor: text;}
-button, input[type="checkbox"], details{cursor: pointer;}
+button, input[type="checkbox"]{cursor: pointer;}
+summary {cursor: pointer;width: fit-content;}
 button.tabs-header{background-color: transparent;border:none;border-radius:0;border-bottom: 2px solid transparent;box-shadow: unset;}
 button.tabs-header.active{border-bottom: 2px solid var(--g2);color:var(--g2);font-weight: bold;}
 button.theme-switcher{background-color: transparent;border:none;border-radius:0;box-shadow: unset;margin-left: 2rem;}
