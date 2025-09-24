@@ -15,6 +15,7 @@ use std::time::{Duration, Instant};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserCommand {
     pub id: String,
+    pub shell: String,
     pub command: String,
     pub icon: String,
     pub sn: bool,
@@ -100,7 +101,7 @@ async fn request_restart(app: tauri::AppHandle) {
 
 #[tauri::command]
 async fn run_test(cmd: UserCommand) -> Result<String, String> {
-    match run_command(cmd.command, cmd.sn) {
+    match run_command(cmd) {
         Ok(success) => Ok(success),
         Err(error) => Ok(error),
     }
@@ -186,7 +187,7 @@ pub fn run() {
             for cmd in &commands_config.commands {
                 let item = MenuItem::with_id(
                     app,
-                    format!("cmd_{}", cmd.command),
+                    format!("cmd_{}", cmd.id),
                     cmd.icon.clone() + &String::from("    ") + &cmd.command,
                     true,
                     None::<&str>,
@@ -213,13 +214,13 @@ pub fn run() {
                     "restart" => app.restart(),
                     "quit" => app.exit(0),
                     id if id.starts_with("cmd_") => {
-                        let cmd_com = id.replace("cmd_", "");
+                        let cmd_id = id.replace("cmd_", "");
                         if let Some(cmd) = commands_config
                             .commands
                             .iter()
-                            .find(|c| c.command == cmd_com)
+                            .find(|c| c.id == cmd_id)
                         {
-                            let _ = run_command(cmd_com, cmd.sn);
+                            let _ = run_command(cmd.clone());
                         }
                     }
                     _ => {}
@@ -264,33 +265,31 @@ fn open_settings<R: Runtime>(app: &tauri::AppHandle<R>) {
     }
 }
 
-fn run_command(cmd: String, sn: bool) -> Result<String, String> {
-    debug!("Executing command: {}", &cmd);
-    let result = execute_command(&cmd);
+fn run_command(cmd: UserCommand) -> Result<String, String> {
+    debug!("Executing command: {}", &cmd.command);
+    let result = execute_command(cmd.clone());
 
     let (is_success, message) = match &result {
         Ok(output) => (
             true,
-            format!("Ok( Command `{}` executed ), Result:\n {}", &cmd, &output),
+            format!("Ok( Command `{}` executed ), Result:\n {}", &cmd.command, &output),
         ),
         Err(err) => (
             false,
-            format!("Err( Command `{}` failed ), Error:\n {}", &cmd, &err),
+            format!("Err( Command `{}` failed ), Error:\n {}", &cmd.command, &err),
         ),
     };
 
     // push to log
     match result {
         Ok(val) => info!(
-            "Command `{}` executed, Result: {}",
-            cmd.clone(),
-            val.replace("\n", " ")
+            "Command `{}` executed, Result: {}",&cmd.command,val.replace("\n", " ")
         ),
-        Err(err) => error!("Command `{}` failed, Error: {}", cmd.clone(), err),
+        Err(err) => error!("Command `{}` failed, Error: {}", &cmd.command, err),
     }
 
     // send notification if fail or enable sn
-    if !is_success || sn {
+    if !is_success || cmd.sn {
         let (summary, body) = message.split_at(message.find('\n').unwrap_or(message.len()));
         let limited_body = if body.chars().count() > 200 {
             format!("{}...", body.chars().take(200).collect::<String>())
@@ -303,12 +302,12 @@ fn run_command(cmd: String, sn: bool) -> Result<String, String> {
     Ok(message)
 }
 
-fn execute_command(command: &str) -> Result<String, String> {
+fn execute_command(cmd: UserCommand) -> Result<String, String> {
     let timeout_secs = 0.5; // Hard limit of 500 ms
     let check_interval = Duration::from_millis(100); // Check every 100 ms
-    let mut child = Command::new("sh")
+    let mut child = Command::new(&cmd.shell)
         .arg("-c")
-        .arg(command)
+        .arg(cmd.command)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()

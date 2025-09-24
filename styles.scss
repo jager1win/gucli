@@ -63,8 +63,9 @@ body{margin:0;clip-path: inset(0 round 1rem);overflow: visible;height: 100vh;
 .container {margin: 0;padding:0.1rem 1rem 0;display: block;overflow-y: auto;background-color: var(--mbc);height: 90vh;
 border-radius: 0 0 0.8rem 0.8rem;}
 
-.commands.form > div.row{display: grid;grid-template-columns: 1fr 4fr 1fr 1fr 1fr 1fr; text-align: center;align-items: center;}
+.commands.form > div.row{display: grid;grid-template-columns: 1fr 1fr 4fr 1fr 1fr 1fr 1fr; text-align: center;align-items: center;}
 .commands.form div.chb{display:flex;justify-items: center;justify-content: center;}
+.commands.form .shell-switch{display:flex;justify-content: space-between;margin-right: 0.4rem;}
 .topline{display:inline-flex; width: 100%;align-items: center; justify-content: space-evenly;height: 3rem;}
 .topline>button{min-width: 9rem;}
 .status{border-top: 1px solid var(--mc-2);border-bottom: 1px solid var(--mc-2);display:grid;grid-template-columns: 0.8fr 1fr 5fr;
@@ -111,7 +112,7 @@ a{color:var(--act)}
     100% { opacity: 1; }
 }
 
-input,button {
+input,button,select {
   border-radius: 0.4rem;
   border: 1px solid transparent;
   padding: 0.4rem;

@@ -8,6 +8,7 @@ use chrono::Local;
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Command {
     pub id: String,
+    pub shell: String,
     pub command: String,
     pub icon: String,
     pub sn: bool,
@@ -17,6 +18,7 @@ impl Command {
     pub fn new(id: String) -> Self {
         Command {
             id,
+            shell: String::from("sh"),
             command: String::from("new"),
             icon: String::from(""),
             sn: true,
@@ -58,7 +60,6 @@ static SETTINGS_HELP: &str =
 "<ul>
     <li>Program executes shell commands that return either nothing or string-convertible output</li>
     <li>Command settings can be edited in <code>/home/$USER/.config/gucli/commands.toml</code> without opening this window (restart required)</li>
-    <li>Example commands are saved in <code>/home/$USER/.config/gucli/example.commands.toml</code></li>
     <li>Errors and results are logged to <code>/home/$USER/.config/gucli/gucli.log</code> (100 line limit, no rotation needed)</li>
     <li>Interactive commands or commands with continuous output are not recommended</li>
     <li>Command execution timeout: 500ms (add <code>&</code> to bypass)</li>
@@ -242,6 +243,20 @@ pub fn App() -> impl IntoView {
         set_status.set("Ok( Order updated )".to_string());
     };
 
+    let set_shell = move |n:usize| {
+        let mut buf = commands.get();
+        let shells = ["sh", "bash", "zsh", "fish"];
+        let cur = buf[n].shell.clone();
+        let idx = shells
+                    .iter()
+                    .position(|s| s == &cur.as_str())
+                    .unwrap();
+        let new = shells[(idx + 1)  % shells.len()].to_string();
+        buf[n].shell = new;
+
+        set_commands.set(buf);
+    };
+
     // monitored status changes update the time of the last operation
     Effect::new(move |_| {
         status.track();
@@ -340,6 +355,7 @@ pub fn App() -> impl IntoView {
                 <div class="commands form">
                     <div class="row head">
                         <span>"#"</span>
+                        <span>"shell"</span>
                         <span>"command"</span>
                         <span>"icon"</span>
                         <span>"sn"</span>
@@ -369,6 +385,10 @@ pub fn App() -> impl IntoView {
                                     "↓"
                                 </button>
                             </div>
+                            <button class="shell-switch" on:click=move |_| set_shell(i.get())>
+                                "▶|"
+                                <span>{move || commands.get()[i.get()].clone().shell}</span>
+                            </button>
                             <input
                                 type="text"
                                 placeholder="Danger zone! Verify commands before adding..."
@@ -630,4 +650,28 @@ fn gen_id() -> String {
     Local::now().timestamp_nanos_opt()
         .unwrap_or(0)
         .to_string()
+}
+
+
+#[component]
+pub fn ShellSwitch() -> impl IntoView {
+    let shells = vec!["sh", "bash", "zsh", "fish"];
+    let (current_index, set_current_index) = signal(0);
+
+    let next_shell = {
+        // захватываем shells и set_current_index
+        let shells = shells.clone(); // если хочется ownership в замыкании
+        move |_| {
+            set_current_index.update(|idx| *idx = (*idx + 1) % shells.len());
+        }
+    };
+
+    view! {
+        <div class="shell-switch">
+            <span class="current-shell">{shells[current_index.get()]}</span>
+            <button class="shell-button" on:click=next_shell>
+                "▶"
+            </button>
+        </div>
+    }
 }

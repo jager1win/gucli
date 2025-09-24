@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use std::fs;
 use std::io::{self, Write};
 use std::path::PathBuf;
-use tracing::error;
+use tracing::{error,debug};
 use tracing_subscriber::fmt::writer::MakeWriter;
 use uuid::Uuid;
 
@@ -13,6 +13,7 @@ pub const LOG_FILE: &str = ".config/gucli/gucli.log";
 // Structure for TOML (without ID)
 #[derive(Serialize, Deserialize)]
 pub struct TomlCommand {
+    pub shell: String,
     pub command: String,
     pub icon: String,
     pub sn: bool,
@@ -109,27 +110,11 @@ pub fn full_path_log() -> PathBuf {
 pub fn set_config(reset: Option<bool>) -> io::Result<String> {
     let reset = reset.unwrap_or(false);
     let commands_path = full_path_commands();
-    let example_path = get_home_dir()
-        .expect("Home dir not found")
-        .join(".config/gucli/example.commands.toml");
 
     if !commands_path.exists() || reset {
         fs::create_dir_all(commands_path.parent().unwrap())?;
+        fs::write(&commands_path, COMMENT.to_string() + EXAMPLE_COMMANDS)?;
 
-        let default_config = r#"# params: command=string(with args, unique), icon=string(<= 8 chars), sn=bool(default=true)
-[[commands]]
-command = "hostname -A"
-icon = "😀"
-sn = true
-
-[[commands]]
-command = "id"
-icon = "🚀"
-sn = true"#;
-        fs::write(&commands_path, default_config.trim())?;
-        if !example_path.exists() {
-            fs::write(&example_path, default_config.trim())?;
-        }
         Ok("File commands.toml created".to_string())
     } else {
         Ok("File commands.toml exists".to_string())
@@ -139,7 +124,11 @@ sn = true"#;
 /// read commands.toml + add id
 pub fn load_commands() -> Result<crate::AppCommandsConfig, Box<dyn std::error::Error>> {
     let content = fs::read_to_string(full_path_commands())?;
-    let toml_config: CommandsConfig = toml::from_str(&content)?;
+    let toml_config: CommandsConfig = toml::from_str(&content)
+        .map_err(|e| {
+            error!("TOML parsing error: {}", e);
+            format!("Invalid TOML syntax: {}", e)
+        })?;
 
     let mut unique_commands = HashSet::new();
 
@@ -164,6 +153,16 @@ pub fn load_commands() -> Result<crate::AppCommandsConfig, Box<dyn std::error::E
             );
             return Err("Icon exceeds 8 characters limit".into());
         }
+
+        // validate shell field
+        let valid_shells = ["sh", "bash", "zsh", "fish"];
+        if !valid_shells.contains(&cmd.shell.as_str()) {
+            error!(
+                "Invalid shell '{}' at index {}. Available values: {:?}",
+                cmd.shell, index, valid_shells
+            );
+            return Err(format!("Invalid shell. Available values: {:?}", valid_shells).into());
+        }
     }
 
     let commands_with_id = toml_config
@@ -171,6 +170,7 @@ pub fn load_commands() -> Result<crate::AppCommandsConfig, Box<dyn std::error::E
         .into_iter()
         .map(|toml_cmd| crate::UserCommand {
             id: Uuid::new_v4().to_string(),
+            shell: toml_cmd.shell,
             command: toml_cmd.command,
             icon: toml_cmd.icon,
             sn: toml_cmd.sn,
@@ -188,6 +188,7 @@ pub fn save_commands(config: &crate::AppCommandsConfig) -> Result<(), Box<dyn st
         .commands
         .iter()
         .map(|cmd| TomlCommand {
+            shell: cmd.shell.clone(),
             command: cmd.command.clone(),
             icon: cmd.icon.clone(),
             sn: cmd.sn,
@@ -197,6 +198,32 @@ pub fn save_commands(config: &crate::AppCommandsConfig) -> Result<(), Box<dyn st
     let toml_config = CommandsConfig {
         commands: toml_commands,
     };
-    let _ = fs::write(full_path_commands(), toml::to_string(&toml_config)?);
+    let _ = fs::write(
+        full_path_commands(),
+        COMMENT.to_string() + &toml::to_string(&toml_config)?,
+    );
     Ok(())
 }
+
+static COMMENT: &str = r#"# The application requires at least one command to function.
+# Please follow the field structure:
+# [[commands]] - defines one element in the commands collection. Required for each command.
+# shell - string (default: "sh"), available values: [sh, bash, zsh, fish]. Required when using shell aliases or functions
+# command - string (unique), can include arguments and shell-specific syntax
+# icon - string (max 8 characters), UTF-8 symbols, text or empty - displays in system tray menu
+# sn - boolean (default: true, write without quotes), send command result to system notification
+"#;
+
+static EXAMPLE_COMMANDS: &str = r#"
+[[commands]]
+shell = "sh"
+command = "echo $SHELL"
+icon = "😀"
+sn = true
+
+[[commands]]
+shell = "sh"
+command = "id"
+icon = "🚀"
+sn = true
+"#;
