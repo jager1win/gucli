@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_wasm_bindgen::{from_value, to_value};
 use wasm_bindgen::prelude::*;
 use chrono::Local;
+use leptos::ev::KeyboardEvent;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Command {
@@ -44,6 +45,11 @@ struct CtrlWindow<'a> {
 #[derive(Serialize)]
 struct ManHelp {
     cmd: String,
+}
+
+#[derive(Serialize)]
+struct OpenFile<'a> {
+    name: &'a str,
 }
 
 #[wasm_bindgen]
@@ -257,6 +263,25 @@ pub fn App() -> impl IntoView {
         set_commands.set(buf);
     };
 
+    //+ Обработчик глобальных горячих клавиш
+    let handle_global_keydown = move |ev: KeyboardEvent| {
+        match &ev.key()[..] {
+            "F1" => active_tab.set(0),
+            "F2" => active_tab.set(1),
+            "F3" => active_tab.set(2),
+            "Escape" => ctrl_window("close"),
+            "F11" => ctrl_window(if is_maximized.get() == "max1" { "max0" } else { "max1" }),
+            _ => {}
+        }
+    };
+
+    let open_file = move |file| {
+        spawn_local(async move {
+            let args = to_value(&OpenFile {name: file}).unwrap();
+            let _js_value = invoke("open_file", args).await;
+        });
+    };
+
     // monitored status changes update the time of the last operation
     Effect::new(move |_| {
         status.track();
@@ -275,28 +300,37 @@ pub fn App() -> impl IntoView {
     });
 
     view! {
-        <div data-tauri-drag-region class="titlebar">
+        <div
+            data-tauri-drag-region
+            class="titlebar"
+            role="application"
+            aria-label="Gucli Application"
+            on:keydown=handle_global_keydown
+        >
             <div class="titlebar-title">"$_" <ThemeToggle /></div>
             <button
                 class:active=move || active_tab.get() == 0
                 class="tabs-header"
                 on:click=move |_| active_tab.set(0)
+                autofocus=move || active_tab.get() == 0
             >
-                "Settings"
+                "Commands [F1]"
             </button>
             <button
                 class:active=move || active_tab.get() == 1
                 class="tabs-header"
                 on:click=move |_| active_tab.set(1)
+                autofocus=move || active_tab.get() == 1
             >
-                "Find help || man"
+                "Find help || man [F2]"
             </button>
             <button
                 class:active=move || active_tab.get() == 2
                 class="tabs-header"
                 on:click=move |_| active_tab.set(2)
+                autofocus=move || active_tab.get() == 2
             >
-                "About"
+                "About [F3]"
             </button>
 
             <div class="titlebar-controls">
@@ -312,7 +346,7 @@ pub fn App() -> impl IntoView {
             </div>
         </div>
 
-        <main class="container">
+        <main class="container" role="main">
             <div hidden=move || active_tab.get() != 0>
                 <div class="topline">
                     <button
@@ -320,6 +354,12 @@ pub fn App() -> impl IntoView {
                         class=move || if autostart.get() { "ok-bg" } else { "" }
                     >
                         {move || if autostart.get() { "Autostart: ON" } else { "Autostart: OFF" }}
+                    </button>
+                    <button on:click=move |_| open_file("log") class="warn-bg">
+                        "Open Log"
+                    </button>
+                    <button on:click=move |_| open_file("commands") class="ok-bg">
+                        "Open Config"
                     </button>
                     <button on:click=move |_| reset_commands() class="err-bg">
                         {move || match reset.get() {
@@ -416,10 +456,10 @@ pub fn App() -> impl IntoView {
                                         });
                                 }
                             />
-                            <div class="chb">
+                            <label class="chb">
                                 <input
                                     type="checkbox"
-                                    checked=move || command.sn
+                                    checked=move || commands.get()[i.get()].clone().sn
                                     on:change=move |ev| {
                                         let checked = event_target_checked(&ev);
                                         set_commands
@@ -428,7 +468,7 @@ pub fn App() -> impl IntoView {
                                             });
                                     }
                                 />
-                            </div>
+                            </label>
                             <div>
                                 <button on:click=move |_| delete_command(i.get()) class="err-bg">
                                     "Delete"
@@ -503,31 +543,39 @@ pub fn ManSearch() -> impl IntoView {
     };
 
     view! {
-        <h4 class="tc">"Get console help with command: man or built-in --help"</h4>
+        <div role="search" aria-label="Command help search">
+            <h4 class="tc" id="man-search-title">
+                "Get console help with command: man or built-in --help"
+            </h4>
 
-        <form on:submit=on_submit class="man_form">
-            <input
-                type="text"
-                placeholder="e.g. `id` or `mpg123 -?`"
-                size=40
-                prop:value=move || input_value.get()
-                on:input=move |ev| set_input_value.set(event_target_value(&ev))
-            />
-            <button type="submit" class="ok-bg">
-                "Find"
-            </button>
-        </form>
+            <form on:submit=on_submit class="man_form" role="search">
+                <input
+                    type="text"
+                    placeholder="e.g. `id` or `mpg123 -?`"
+                    size=40
+                    prop:value=move || input_value.get()
+                    on:input=move |ev| set_input_value.set(event_target_value(&ev))
+                    aria-labelledby="man-search-title"
+                    aria-describedby="search-help"
+                />
+                <button type="submit" class="ok-bg" aria-label="Run search">
+                    "Search"
+                </button>
+            </form>
 
-        <pre
-            class="man_result"
-            inner_html=move || man.get()
-            hidden=move || { man.get().is_empty() }
-        ></pre>
+            <pre
+                class="man_result"
+                inner_html=move || man.get()
+                hidden=move || { man.get().is_empty() }
+                aria-live="polite"
+                aria-atomic="true"
+            ></pre>
 
-        <details>
-            <summary>Help</summary>
-            <div class="text-bg" inner_html=SEARCH_HELP></div>
-        </details>
+            <details id="search-help">
+                <summary>Help</summary>
+                <div class="text-bg" inner_html=SEARCH_HELP></div>
+            </details>
+        </div>
     }
 }
 
@@ -576,6 +624,7 @@ pub fn About() -> impl IntoView {
                 <p>
                     "For information on compatibility, dependencies, or to report issues, please visit the homepage."
                 </p>
+                <p>"♾️ Accessibility"</p>
             </p>
         </div>
     }
@@ -639,7 +688,10 @@ pub fn ThemeToggle() -> impl IntoView {
                     });
             }
             class="theme-switcher"
-            aria-label="Toggle theme"
+            aria-label=move || {
+                format!("Switch to {} theme", if theme.get() == "light" { "dark" } else { "light" })
+            }
+            title=move || format!("Current theme: {}", theme.get())
         >
             {move || if theme.get() == "light" { "🌙" } else { "🌞" }}
         </button>

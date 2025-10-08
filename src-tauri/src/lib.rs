@@ -11,6 +11,7 @@ use crate::files::*;
 use std::process::Stdio;
 use std::thread;
 use std::time::{Duration, Instant};
+use tauri_plugin_opener::OpenerExt;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserCommand {
@@ -24,6 +25,20 @@ pub struct UserCommand {
 #[derive(Default, Debug, Serialize, Deserialize)]
 pub struct AppCommandsConfig {
     pub commands: Vec<UserCommand>,
+}
+
+#[tauri::command]
+async fn open_file(name:&str, app: tauri::AppHandle) -> Result<String, String>{
+    let path = match name {
+        "log" => full_path_log(),
+        "commands" => full_path_commands(),
+        _ => return Err("invalid name, use \"log\" or \"commands\"".into()),
+    };
+    let opener = app.opener();
+    match opener.open_path(path.to_string_lossy(), None::<&str>) {
+        Ok(_) => Ok("File opened".to_string()),
+        Err(e) => Ok(e.to_string()),
+    }
 }
 
 #[tauri::command]
@@ -178,6 +193,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
+
             // tray menu
             let settings = MenuItem::with_id(app, "settings", "⚙️   Settings", true, None::<&str>)?;
             let restart = MenuItem::with_id(app, "restart", "🔃   Restart", true, None::<&str>)?;
@@ -239,7 +255,8 @@ pub fn run() {
             autostart_toggle,
             autostart_status,
             get_man,
-            get_app_info
+            get_app_info,
+            open_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -253,14 +270,13 @@ fn open_settings<R: Runtime>(app: &tauri::AppHandle<R>) {
         // Creating a new window
         let _window =
             tauri::WebviewWindowBuilder::new(app, "settings", tauri::WebviewUrl::App("/".into()))
-                .title("Settings")
+                .title("Gucli settings")
                 .inner_size(800.0, 600.0)
                 .transparent(true)
                 .decorations(false)
                 .visible(true)
                 .build()
                 .unwrap();
-
         _window.set_focus().unwrap();
     }
 }

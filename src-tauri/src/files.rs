@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use std::fs;
 use std::io::{self, Write};
 use std::path::PathBuf;
-use tracing::{error,debug};
+use tracing::{error};
 use tracing_subscriber::fmt::writer::MakeWriter;
 use uuid::Uuid;
 
