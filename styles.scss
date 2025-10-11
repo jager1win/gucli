@@ -1,3 +1,4 @@
+html { color-scheme: light dark; }
 :root {
   font-family: system-ui, sans-serif;
   font-size: 0.9rem;
@@ -27,7 +28,7 @@
 }
 
 body{margin:0;clip-path: inset(0 round 1rem);overflow: visible;height: 100vh;
-  background-color: transparent;/*var(--main-bg-color);*/
+  background-color: transparent;
   box-shadow: 0 0 10px oklch(21% 0.006 285.885);
   padding: 0;
 }
@@ -63,9 +64,10 @@ body{margin:0;clip-path: inset(0 round 1rem);overflow: visible;height: 100vh;
 .container {margin: 0;padding:0.1rem 1rem 0;display: block;overflow-y: auto;background-color: var(--mbc);height: 90vh;
 border-radius: 0 0 0.8rem 0.8rem;}
 
-.commands.form > div.row{display: grid;grid-template-columns: 1fr 1fr 4fr 1fr 1fr 1fr 1fr; text-align: center;align-items: center;}
-.commands.form div.chb{display:flex;justify-items: center;justify-content: center;}
-.commands.form .shell-switch{display:flex;justify-content: space-between;margin-right: 0.4rem;}
+.commands.form > div.row{display: grid;grid-template-columns: 1fr 1fr 4fr 1fr 1fr 1fr 1fr; text-align: center;align-items: center;justify-content: center;margin:0.4rem 0;}
+.commands.form > div.row > *{justify-self: center;}
+.commands.form .shell-switch{display:flex;justify-content: space-between;min-width: 5rem;}
+.commands.form .coma{width: 90%;}
 .topline{display:inline-flex; width: 100%;align-items: center; justify-content: space-between;height: 3rem;}
 .topline>button{width: 10rem;white-space: nowrap;}
 .status{border-top: 1px solid var(--mc-2);border-bottom: 1px solid var(--mc-2);display:grid;grid-template-columns: 0.8fr 1fr 5fr;
@@ -76,7 +78,7 @@ border-radius: 0 0 0.8rem 0.8rem;}
 .status > div:nth-child(3){overflow: auto;display: flex;overflow: overlay;scrollbar-gutter: stable;}
 .status-block{white-space: pre-wrap;width: max-content;min-height:3rem;padding: 0 0.4rem;overflow: hidden auto;max-height: 4rem;overflow-wrap: break-word;hyphens: auto;width: 100%;}
 .ttime{color:var(--mc-2);}
-.iicon{text-align: center;margin:0 1rem;}
+.iicon{text-align: center;}
 div.buttons{display: grid;grid-template-columns:1fr 1fr 1fr;align-items: center;border-top: 1px solid var(--mc-2);padding:0.6rem 10%;margin:0.8rem 0;}
 h5{cursor:default}
 div.order{display: flex;position: relative;justify-content: center;align-items: center;}
@@ -101,7 +103,6 @@ pre {background-color: var(--gr2);padding: 1rem;border-radius: 0.4rem;overflow: 
 .row {display: flex;justify-content:space-between;margin:0.4rem;}
 .row.head,.status{font-weight: bold;}
 
-a{color:var(--act)}
 .status-block {transition: opacity 0.3s ease;}
 .status-block[data-update] {animation: fadeHighlight 1s;}
 .status-block.highlight {animation: status-highlight 1.2s ease;}
@@ -138,6 +139,21 @@ button:active {background-color: var(--mbc);}
 .man-uppercase {color:var(--t1)}
 .man-dash {color:var(--t2)}
 .man-uppercase, .man-dash{font-weight: 900;}
+.chb input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: auto;
+  color: var(--mc);
+  width: 1.8rem;
+  height: 1.8rem;
+  border: 0.15em solid var(--mbc);
+  border-radius: 0.2rem;
+  transform: translateY(-0.075em);
+  display: grid;
+  place-content: center;
+}
+.chb input[type="checkbox"]::before {content: "❎";font-size: 1.6rem;transform: scale(1);}
+.chb input[type="checkbox"]:checked::before {content: "✅";}
 
 :root[data-theme="dark"] {
   --mc:oklch(96.7% 0.003 264.542);
@@ -150,4 +166,32 @@ button:active {background-color: var(--mbc);}
   --mc-2: oklch(70.7% 0.022 261.325);/* gray 400 */
   --t1:#83aec4;
   --t2:#bc8883;
+}
+
+:root[data-theme="a11y"] {
+  /* Базовые цвета - максимальный контраст */
+  --mc: #FFFFFF; /* Основной текст - белый */
+  --mbc: #000000; /* Фон - черный */
+  
+  /* Акцентные цвета - яркие и контрастные */
+  --act: #FFFF00; /* Желтый для активных элементов */
+  --warn: #FFA500; /* Оранжевый для предупреждений (лучше виден чем исходный) */
+  --err: #FF0000; /* Красный для ошибок (максимальная видимость) */
+  
+  /* Градиенты - упрощенные */
+  --gr: #000000; /* Начало градиента - черный */
+  --gr2: #333333; /* Конец градиента - темно-серый */
+  
+  /* Второстепенные цвета */
+  --mc-2: #CCCCCC; /* Серый для второстепенного текста */
+  
+  /* Специфические цвета */
+  --t1: #00FFFF; /* Голубой - хорошая видимость на черном */
+  --t2: #FF00FF; /* Пурпурный - контрастный акцент */
+  /* Увеличить толщину границ для фокуса */
+  outline: 3px solid var(--act) !important;
+  
+  /* Убрать полупрозрачности */
+  opacity: 1 !important;
+  .chb input[type="checkbox"]:focus {outline: 3px solid #FFFF00;outline-offset: 2px;}
 }

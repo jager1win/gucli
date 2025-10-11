@@ -5,6 +5,7 @@ use serde_wasm_bindgen::{from_value, to_value};
 use wasm_bindgen::prelude::*;
 use chrono::Local;
 use leptos::ev::KeyboardEvent;
+use web_sys::window;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Command {
@@ -98,7 +99,44 @@ pub fn App() -> impl IntoView {
     let unsaved_changes = RwSignal::new("");
     let highlight = RwSignal::new(false);
     let ttime = RwSignal::new(String::from(""));
-    
+
+    // Theme switcher
+        let mut initial_theme = "light".to_string();
+        let local_storage_theme: Option<String> = window()//get value from localStorage 
+            .and_then(|w| w.local_storage().ok())
+            .and_then(|s| s?.get("theme").ok())
+            .flatten();
+        // 2. get system theme IF localStorage None or empty
+        let prefer = match local_storage_theme.as_deref() {
+            Some(theme) if !theme.is_empty() => None,
+            _ => {
+                window()
+                    .and_then(|w| w.match_media("(prefers-color-scheme: dark)").ok())
+                    .flatten()
+                    .map(|mql| if mql.matches() { "dark" } else { "light" })
+            }
+        };
+        // 3. set theme
+        if let Some(theme) = local_storage_theme {
+            if !theme.is_empty() {
+                initial_theme = theme;
+            }
+        } else if let Some(pref) = prefer {
+            initial_theme = pref.to_string();
+        }
+        let (theme, set_theme) = signal(initial_theme);
+        let toggle_theme = move || {
+            set_theme.update(|t| {
+                *t = match t.as_str() {
+                    "light" => "dark".into(),
+                    "dark" => "a11y".into(),
+                    "a11y" => "light".into(),
+                    _ => "light".into(),
+                };
+            });
+        };
+
+        
     //+ init commands on open window
     spawn_local(async move {
         let js_value = invoke_without_args("get_commands").await;
@@ -269,6 +307,7 @@ pub fn App() -> impl IntoView {
             "F1" => active_tab.set(0),
             "F2" => active_tab.set(1),
             "F3" => active_tab.set(2),
+            "F4" => toggle_theme(),
             "Escape" => ctrl_window("close"),
             "F11" => ctrl_window(if is_maximized.get() == "max1" { "max0" } else { "max1" }),
             _ => {}
@@ -299,6 +338,20 @@ pub fn App() -> impl IntoView {
         }else{ unsaved_changes.set("")}
     });
 
+    // for toggle_theme
+    Effect::new(move |_| {
+        if let Some(window) = window() {
+            if let Some(html_el) = window.document().and_then(|d| d.document_element()) {
+                let current_theme = theme.get();
+                let _ = html_el.set_attribute("data-theme", &current_theme);
+            }
+
+            if let Ok(Some(storage)) = window.local_storage() {
+                let _ = storage.set("theme", &theme.get());
+            }
+        }
+    });
+
     view! {
         <div
             data-tauri-drag-region
@@ -307,7 +360,22 @@ pub fn App() -> impl IntoView {
             aria-label="Gucli Application"
             on:keydown=handle_global_keydown
         >
-            <div class="titlebar-title">"$_" <ThemeToggle /></div>
+            <div class="titlebar-title">
+                "$_"
+                <button
+                    on:click=move |_| toggle_theme()
+                    class="theme-switcher"
+                    aria-label=move || format!("Switch theme. Current: {}", theme.get())
+                    title=move || format!("Current theme: {}", theme.get())
+                >
+                    {move || match theme.get().as_str() {
+                        "light" => "🌞[F4]",
+                        "dark" => "🌙[F4]",
+                        "a11y" => "♾️[F4]",
+                        _ => "🌞[F4]",
+                    }}
+                </button>
+            </div>
             <button
                 class:active=move || active_tab.get() == 0
                 class="tabs-header"
@@ -430,6 +498,7 @@ pub fn App() -> impl IntoView {
                                 <span>{move || commands.get()[i.get()].clone().shell}</span>
                             </button>
                             <input
+                                class="coma"
                                 type="text"
                                 placeholder="Danger zone! Verify commands before adding..."
                                 value=move || command.command.clone()
@@ -466,6 +535,18 @@ pub fn App() -> impl IntoView {
                                             .update(|cmds| {
                                                 cmds[i.get()].sn = checked;
                                             });
+                                    }
+                                    on:keydown=move |ev: KeyboardEvent| {
+                                        if ev.key() == "Enter" || ev.key() == " " {
+                                            ev.prevent_default();
+                                            set_commands
+                                                .update(|cmds| {
+                                                    cmds[i.get()].sn = !cmds[i.get()].sn;
+                                                });
+                                        }
+                                    }
+                                    aria-label=move || {
+                                        format!("System notifications, {}", if commands.get()[i.get()].clone().sn { "on" } else { "off" })
                                     }
                                 />
                             </label>
@@ -630,80 +711,11 @@ pub fn About() -> impl IntoView {
     }
 }
 
-
-#[component]
-pub fn ThemeToggle() -> impl IntoView {
-    use web_sys::window;
-    // 0. init
-    let mut initial_theme = "light".to_string();
-
-    // 1. get value from localStorage 
-    let local_storage_theme: Option<String> = window()
-        .and_then(|w| w.local_storage().ok())
-        .and_then(|s| s?.get("theme").expect(""));
-
-    // 2. get system theme IF localStorage None or empty
-    let prefer = match local_storage_theme.as_deref() {
-        Some(theme) if !theme.is_empty() => None,
-        _ => {
-            window()
-                .and_then(|w| w.match_media("(prefers-color-scheme: dark)").ok())
-                .map(|mql| if mql.expect("").matches() { "dark" } else { "light" })
-        }
-    };
-
-    // 3. set theme
-    if let Some(theme) = local_storage_theme {
-        if !theme.is_empty() {
-            initial_theme = theme;
-        }
-    } else if let Some(pref) = prefer {
-        initial_theme = pref.to_string();
-    }
-
-    let (theme, set_theme) = signal(initial_theme);
-
-    Effect::new(move |_| {
-        if let Some(window) = window() {
-            if let Some(html_el) = window.document().and_then(|d| d.document_element()) {
-                let _ = if theme.get() == "dark" {
-                    html_el.set_attribute("data-theme", "dark")
-                } else {
-                    html_el.set_attribute("data-theme", "light")
-                };
-            }
-
-            if let Ok(Some(storage)) = window.local_storage() {
-                let _ = storage.set("theme", &theme.get());
-            }
-        }
-    });
-
-    view! {
-        <button
-            on:click=move |_| {
-                set_theme
-                    .update(|t| {
-                        *t = if *t == "light" { "dark".into() } else { "light".into() };
-                    });
-            }
-            class="theme-switcher"
-            aria-label=move || {
-                format!("Switch to {} theme", if theme.get() == "light" { "dark" } else { "light" })
-            }
-            title=move || format!("Current theme: {}", theme.get())
-        >
-            {move || if theme.get() == "light" { "🌙" } else { "🌞" }}
-        </button>
-    }
-}
-
 fn gen_id() -> String {
     Local::now().timestamp_nanos_opt()
         .unwrap_or(0)
         .to_string()
 }
-
 
 #[component]
 pub fn ShellSwitch() -> impl IntoView {
