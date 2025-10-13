@@ -17,13 +17,17 @@ html { color-scheme: light dark; }
   --t1:#085D8A;
   --t2:#791208;
 
+  --focus-bg: transparent;
+  --focus-color: #666666;
+  --focus-shadow: 0 0 0 3px rgba(102, 102, 102, 0.3);
+
   height: 100vh;
   box-sizing: border-box;
   color: var(--mc);
   background-color: transparent;
 
-  /*font-synthesis: none;
-  text-rendering: optimizeLegibility;*/
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
   overflow: hidden;
 }
 
@@ -124,7 +128,9 @@ input,button,select {
   box-shadow: 0 2px 2px oklch(21% 0.006 285.885);
   outline: none;
 }
-:focus{outline: 1px dotted var(--act);}
+:focus{outline: 2px solid var(--focus-color);
+  background-color: var(--focus-bg);
+  box-shadow: var(--focus-shadow);}
 input{cursor: text;}
 button, input[type="checkbox"]{cursor: pointer;}
 summary {cursor: pointer;width: fit-content;}
@@ -166,6 +172,9 @@ button:active {background-color: var(--mbc);}
   --mc-2: oklch(70.7% 0.022 261.325);/* gray 400 */
   --t1:#83aec4;
   --t2:#bc8883;
+  --focus-bg: transparent;
+  --focus-color: #cccccc;
+  --focus-shadow: 0 0 0 3px rgba(204, 204, 204, 0.4);
 }
 
 :root[data-theme="a11y"] {
@@ -190,6 +199,9 @@ button:active {background-color: var(--mbc);}
   --t2: #FF00FF; /* Пурпурный - контрастный акцент */
   /* Увеличить толщину границ для фокуса */
   outline: 3px solid var(--act) !important;
+  --focus-color: #ffff00;
+  --focus-bg: #000000;
+  --focus-shadow: 0 0 0 3px #ffff00, 0 0 0 6px #000000;
   
   /* Убрать полупрозрачности */
   opacity: 1 !important;
