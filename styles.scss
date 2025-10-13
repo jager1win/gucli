@@ -7,7 +7,6 @@ html { color-scheme: light dark; }
   --mbc:oklch(87.2% 0.01 258.338 / 90%);
   --warn: oklch(68.1% 0.162 75.834);
   --err: oklch(63.7% 0.237 25.331);
-  --act:var(--g1);
   --gr:oklch(70.7% 0.022 261.325);
   --gr2: oklch(86.9% 0.022 252.894);
   --g1: oklch(37.8% 0.077 168.94);/* emerald 900 green*/
@@ -16,6 +15,8 @@ html { color-scheme: light dark; }
   --mc-2: oklch(44.6% 0.03 256.802);/* gray 600 */
   --t1:#085D8A;
   --t2:#791208;
+  --act:var(--g2);
+  --act1:var(--g1);
 
   --focus-bg: transparent;
   --focus-color: #666666;
@@ -50,7 +51,8 @@ body{margin:0;clip-path: inset(0 round 1rem);overflow: visible;height: 100vh;
     justify-content: space-between;
     align-items: center;
     padding: 0.4rem 0.4rem;
-    border-bottom: 2px solid var(--g1);
+    border: 2px solid var(--act);
+    border-radius: 1rem 1rem 0 0;
     overflow: hidden;
 }
 .titlebar-controls{display: inline-flex;}
@@ -62,11 +64,11 @@ body{margin:0;clip-path: inset(0 round 1rem);overflow: visible;height: 100vh;
     cursor: pointer;
     display: inline-flex; align-items: center; justify-content: center;
 }
-.titlebar-controls button:hover {border: 1px solid var(--act);}
+/**.titlebar-controls button:hover {border: 1px solid var(--act);}**/
 .titlebar-title{margin-right: 1rem;}
 [data-tauri-drag-region] {cursor: move;}
 .container {margin: 0;padding:0.1rem 1rem 0;display: block;overflow-y: auto;background-color: var(--mbc);height: 90vh;
-border-radius: 0 0 0.8rem 0.8rem;}
+border-bottom: 2px solid var(--act);border-left: 2px solid var(--act);border-right: 2px solid var(--act);border-radius: 0 0 0.8rem 0.8rem;}
 
 .commands.form > div.row{display: grid;grid-template-columns: 1fr 1fr 4fr 1fr 1fr 1fr 1fr; text-align: center;align-items: center;justify-content: center;margin:0.4rem 0;}
 .commands.form > div.row > *{justify-self: center;}
@@ -86,9 +88,9 @@ border-radius: 0 0 0.8rem 0.8rem;}
 div.buttons{display: grid;grid-template-columns:1fr 1fr 1fr;align-items: center;border-top: 1px solid var(--mc-2);padding:0.6rem 10%;margin:0.8rem 0;}
 h5{cursor:default}
 div.order{display: flex;position: relative;justify-content: center;align-items: center;}
-div.order .nn{font-size: 1.4rem;color: var(--g2);}
+div.order .nn{font-size: 1.4rem;color: var(--act1);}
 div.order button{background: none;border-width:0.1rem;padding: 0.3rem;box-shadow: none;}
-div.order button:hover{border-color:var(--act);color:var(--act);}
+div.order button:hover{border-color:var(--act);color:var(--act1);}
 div.order button:disabled{cursor: not-allowed;opacity: 0.5;}
 div.order button:disabled:hover{border-color:transparent;}
 
@@ -166,7 +168,8 @@ button:active {background-color: var(--mbc);}
   --mbc:oklch(21% 0.006 285.885 / 90%);/*zinc 900*/
   --warn: oklch(65.2% 0.199 91.936);
   --err: oklch(63.7% 0.237 25.331);
-  --act:var(--g3);
+  --act:var(--g1);
+  --act1:var(--g2);
   --gr:oklch(0.37 0.013 285.805);
   --gr2:oklch(44.6% 0.03 256.802);
   --mc-2: oklch(70.7% 0.022 261.325);/* gray 400 */
@@ -184,6 +187,7 @@ button:active {background-color: var(--mbc);}
   
   /* Акцентные цвета - яркие и контрастные */
   --act: #FFFF00; /* Желтый для активных элементов */
+  --act1: #FFFF00; /* Желтый для активных элементов */
   --warn: #FFA500; /* Оранжевый для предупреждений (лучше виден чем исходный) */
   --err: #FF0000; /* Красный для ошибок (максимальная видимость) */
   

@@ -381,6 +381,7 @@ pub fn App() -> impl IntoView {
                 class="tabs-header"
                 on:click=move |_| active_tab.set(0)
                 autofocus=move || active_tab.get() == 0
+                aria-keyshortcuts="F1"
             >
                 "Commands [F1]"
             </button>
@@ -389,6 +390,7 @@ pub fn App() -> impl IntoView {
                 class="tabs-header"
                 on:click=move |_| active_tab.set(1)
                 autofocus=move || active_tab.get() == 1
+                aria-keyshortcuts="F2"
             >
                 "Find help || man [F2]"
             </button>
@@ -397,6 +399,7 @@ pub fn App() -> impl IntoView {
                 class="tabs-header"
                 on:click=move |_| active_tab.set(2)
                 autofocus=move || active_tab.get() == 2
+                aria-keyshortcuts="F3"
             >
                 "About [F3]"
             </button>
@@ -446,7 +449,7 @@ pub fn App() -> impl IntoView {
                     <div>
                         <span class="ttime">{move || ttime.get()}</span>
                     </div>
-                    <div>
+                    <div role="status" aria-live="polite" aria-atomic="true">
                         <span
                             class="status-block"
                             class:ok-text=move || status.get().starts_with("Ok")
@@ -482,6 +485,7 @@ pub fn App() -> impl IntoView {
                                 <button
                                     on:click=move |_| move_command(true, i.get())
                                     prop:disabled=move || i.get() == 0
+                                    aria-label=move || format!("Move command '{}' up", commands.get()[i.get()].command.clone())
                                 >
                                     "↑"
                                 </button>
@@ -489,11 +493,23 @@ pub fn App() -> impl IntoView {
                                 <button
                                     on:click=move |_| move_command(false, i.get())
                                     prop:disabled=move || i.get() == commands.get().len() - 1
+                                    aria-label=move || format!("Move command '{}' down", commands.get()[i.get()].command.clone())
                                 >
                                     "↓"
                                 </button>
                             </div>
-                            <button class="shell-switch" on:click=move |_| set_shell(i.get())>
+                            <button
+                                class="shell-switch"
+                                on:click=move |_| set_shell(i.get())
+                                aria-live="polite"
+                                aria-atomic="true"
+                                aria-label=move || {
+                                    format!(
+                                        "Switch shell. Current: {}",
+                                        commands.get()[i.get()].clone().shell,
+                                    )
+                                }
+                            >
                                 "▶|"
                                 <span>{move || commands.get()[i.get()].clone().shell}</span>
                             </button>
@@ -509,6 +525,7 @@ pub fn App() -> impl IntoView {
                                             cmds[i.get()].command = value;
                                         });
                                 }
+                                aria-description="Warning: Commands execute with user permissions. Test commands first."
                             />
                             <input
                                 class="iicon"
@@ -546,7 +563,15 @@ pub fn App() -> impl IntoView {
                                         }
                                     }
                                     aria-label=move || {
-                                        format!("System notifications, {}", if commands.get()[i.get()].clone().sn { "on" } else { "off" })
+                                        format!(
+                                            "Show system notification for command '{}'. Currently: {}",
+                                            commands.get()[i.get()].command.clone(),
+                                            if commands.get()[i.get()].clone().sn {
+                                                "on"
+                                            } else {
+                                                "off"
+                                            },
+                                        )
                                     }
                                 />
                             </label>
