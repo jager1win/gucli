@@ -1,5 +1,5 @@
 {
-  "productName": "Gucli",
+  "productName": "gucli",
   "version": "1.0.0",
   "identifier": "site.jager.gucli",
   "build": {
@@ -25,7 +25,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["deb"],
+    "targets": ["deb","rpm"],
     "category": "Utility",
     "licenseFile":"../LICENSE",
     "license": "GPL-3.0+",
