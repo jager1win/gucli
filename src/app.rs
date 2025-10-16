@@ -371,7 +371,7 @@ pub fn App() -> impl IntoView {
                     {move || match theme.get().as_str() {
                         "light" => "🌞[F4]",
                         "dark" => "🌙[F4]",
-                        "a11y" => "♾️[F4]",
+                        "a11y" => "♿[F4]",
                         _ => "🌞[F4]",
                     }}
                 </button>
@@ -730,7 +730,7 @@ pub fn About() -> impl IntoView {
                 <p>
                     "For information on compatibility, dependencies, or to report issues, please visit the homepage."
                 </p>
-                <p>"♾️ Accessibility"</p>
+                <p>"♿ Accessibility"</p>
             </p>
         </div>
     }
