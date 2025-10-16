@@ -29,7 +29,7 @@
     "category": "Utility",
     "licenseFile":"../LICENSE",
     "license": "GPL-3.0+",
-    "shortDescription": "One-click launcher for CLI commands from system tray",
+    "shortDescription": "Your personal command center in system tray",
     "longDescription": "Gucli (from GUI + CLI) is a simple system tray application that turns frequent console commands into accessible menu items for one-click launching.",
     "homepage": "https://github.com/jager1win/gucli",
     "icon": [
