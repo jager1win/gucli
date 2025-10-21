@@ -202,7 +202,7 @@ pub fn App() -> impl IntoView {
     //+ Add a new row with default values
     let add_command = move || {
         let mut buf = commands.get();
-        buf.push(Command::new(gen_id()));
+        buf.push(Command::new(generate_id()));
         set_commands.update(move |b| *b = buf.clone());
         set_status.set("Warning( Specify the command and its parameters and test it )".to_string());
     };
@@ -485,7 +485,12 @@ pub fn App() -> impl IntoView {
                                 <button
                                     on:click=move |_| move_command(true, i.get())
                                     prop:disabled=move || i.get() == 0
-                                    aria-label=move || format!("Move command '{}' up", commands.get()[i.get()].command.clone())
+                                    aria-label=move || {
+                                        format!(
+                                            "Move command '{}' up",
+                                            commands.get()[i.get()].command.clone(),
+                                        )
+                                    }
                                 >
                                     "↑"
                                 </button>
@@ -493,7 +498,12 @@ pub fn App() -> impl IntoView {
                                 <button
                                     on:click=move |_| move_command(false, i.get())
                                     prop:disabled=move || i.get() == commands.get().len() - 1
-                                    aria-label=move || format!("Move command '{}' down", commands.get()[i.get()].command.clone())
+                                    aria-label=move || {
+                                        format!(
+                                            "Move command '{}' down",
+                                            commands.get()[i.get()].command.clone(),
+                                        )
+                                    }
                                 >
                                     "↓"
                                 </button>
@@ -612,12 +622,12 @@ pub fn App() -> impl IntoView {
                 </details>
 
             </div>
-            <div hidden=move || active_tab.get() != 1>
+            <Show when=move || active_tab.get() == 1>
                 <ManSearch />
-            </div>
-            <div hidden=move || active_tab.get() != 2>
+            </Show>
+            <Show when=move || active_tab.get() == 2>
                 <About />
-            </div>
+            </Show>
         </main>
     }
 }
@@ -696,6 +706,7 @@ pub fn About() -> impl IntoView {
         }
     });
     });
+    
     view! {
         <div class="help tc">
             <p class="text-bg">
@@ -711,22 +722,24 @@ pub fn About() -> impl IntoView {
                     info.get()
                         .into_iter()
                         .map(|n| {
+                            log::debug!("aaa: {:?}", n);
                             if n.starts_with("http") {
                                 view! {
                                     <p>
-                                        "Homepage: "<a href=n target="_blank">
+                                        <a href=n target="_blank">
                                             {n.clone()}
                                         </a>
                                     </p>
                                 }
                                     .into_any()
+                            } else if n.starts_with("Version") {
+                                view! { <Releases current=n /> }.into_any()
                             } else {
                                 view! { <p>{n}</p> }.into_any()
                             }
                         })
                         .collect_view()
                 }}
-
                 <p>
                     "For information on compatibility, dependencies, or to report issues, please visit the homepage."
                 </p>
@@ -736,7 +749,47 @@ pub fn About() -> impl IntoView {
     }
 }
 
-fn gen_id() -> String {
+use leptos::*;
+
+#[component]
+pub fn Releases(current: String) -> impl IntoView {
+    let current_version = current.split_once(' ').map(|(_, r)| r).unwrap_or("").to_string();
+    let (latest_version, set_latest_version) = signal(None::<String>);
+    
+    spawn_local(async move {
+        let client = reqwest::Client::new();
+        if let Ok(response) = client
+            .get("https://api.github.com/repos/jager1win/ksc/releases/latest")
+            .header("User-Agent", "App/Version")
+            .send()
+            .await
+            && let Ok(release) = response.json::<serde_json::Value>().await
+                && let Some(latest_ver) = release["tag_name"].as_str() {
+                    set_latest_version.set(Some(latest_ver.trim_start_matches('v').to_string()));
+                }
+    });
+
+    view! { 
+        <p>
+            {current}
+            <span>
+                <Transition fallback=move || view! { <span>"Checking..."</span> }>
+                    {move || match latest_version.get() {
+                        Some(latest) if latest == current_version => {
+                            view! { <span>" - latest version"</span> }.into_any()
+                        }
+                        Some(latest) => {
+                            view! { <span>" - new version " {latest} " available!"</span> }.into_any()
+                        }
+                        None => view! { <span>" - failed to check"</span> }.into_any(),
+                    }}
+                </Transition>
+            </span>
+        </p> 
+    }
+}
+
+fn generate_id() -> String {
     Local::now().timestamp_nanos_opt()
         .unwrap_or(0)
         .to_string()
