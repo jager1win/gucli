@@ -1,13 +1,13 @@
 ## Gucli - Your personal command center in the system tray
-Gucli (от GUI + CLI) — это меню в системном трее Linux, которое преобразует пользовательские консольные команды в доступные пункты меню для запуска одним щелчком или через клавиатуру. Результат выполнения по умолчанию выводится в системные уведомления. Приложение может быть полезно как опытным пользователям, так и людям с ограниченными возможностями.
+Gucli (from GUI + CLI) is a system tray menu for Linux that converts user console commands into accessible menu items for one-click or keyboard launch. Execution results are displayed in system notifications by default. The application can be useful for both advanced users and people with disabilities.
 
-### Ограничения приложения
-  - Таймаут выполнения: 500 мс. Для более длительных операций добавьте & в конец команды
-  - Ограничение уведомлений: 200 символов. Превышение может вызвать зависание оболочки
+### Application Limitations
+- Execution timeout: 500 ms. For longer operations, add `&` at the end of the command
+- Notification limit: 200 characters. Exceeding this may cause shell freezing
 
-### Настройка команд
-Файл создается при первом запуске - `~/.config/gucli/commands.toml` с 2 дефолтными примерами команд.
-Формат TOML очень прост и удобен для редактирования. В начальном комментарии подробно описана структура. Вот его содержимое:
+### Command Configuration
+A configuration file is created on first launch - `~/.config/gucli/commands.toml` with 2 default command examples.
+The TOML format is very simple and convenient for editing. The structure is detailed in the initial comments. Here's its content:
 ```toml
 # The application requires at least one command to function.
 # Please follow the field structure:
@@ -29,37 +29,38 @@ command = "id"
 icon = "🚀"
 sn = true
 ```
-После редактирования настроек приложение нужно перезапустить.
-Так же свои команды можно забиндить в программу через GUI: Systray->Gucli->Settings.
-Плюс в окне настроек приложения можно:
-- добавить программу в автозагрузку
-- открыть по клику файлы в редакторе по умолчанию файлы `commands.toml` & `gucli.log`
-- сбросить `commands.toml` до дефолтных значений, указанных выше
-- редактировать команды и сразу тестировать их
-- получить справочную информацию по команде, просто введя команду, а приложение поищет по консольным выводам `--help`, `man` etc.
+After editing settings, the application needs to be restarted.
+You can also bind your own commands through the GUI: Systray→Gucli→Settings.
+Additionally, in the application settings window you can:
+- Add the program to autostart
+- Open commands.toml & gucli.log files in the default editor with one click
+- Reset commands.toml to default values as shown above
+- Edit commands and test them immediately
+- Get help information for a command by simply entering it - the application will search through console outputs like --help, man, etc
 
-### Использование
-Основной сценарий: выберите команду в меню → получите результат в уведомлении 
+### Usage
+Main scenario: select a command from the tray menu → get the result in notification.
 
-НЕ РЕКОМЕНДУЕТСЯ!!! Использовать долго выполняющиеся команды (например `watch`) в программе, для этого есть полноценный терминал, они просто повиснут в процессах. ⚠️ Приложение не ограничивает выполняемые команды. Убедитесь, что добавляете только проверенные команды.  
+NOT RECOMMENDED!!! Using long-running commands (like watch) in the program - use a full terminal for these, as they will hang in processes. ⚠️ The application does not restrict executed commands. Make sure to add only verified commands.
 
-ВАЖНО!!! Не забывайте об ограничениях по времени выполнения и выводу, и так же всегда тестируйте перед добавлением.  
+IMPORTANT!!! Always remember the execution time and output limitations, and always test before adding.
 
-В остальном конечно все индивидуально - `systemctl`, `docker` etc. Рекомендую выносить сложные или длинные последовательности в `aliases` или скрипты (bash/zsh/fish) и вызывать их короткой командой, например `sh my_script.sh --f1`  
+Otherwise, it's all individual - systemctl, docker, etc. I recommend moving complex or long sequences to aliases or scripts (bash/zsh/fish) and calling them with short commands, for example `sh my_script.sh --f1`
 
-Результаты выполнения сохраняются в `~/.config/gucli/gucli.log`. Сохраняются последние 100 строк (ротация логов). В начало файла записывается время-команда-результат или ошибка приложения.
+Execution results are saved in `~/.config/gucli/gucli.log`. The last 100 lines are preserved (log rotation). Timestamp-command-result or application error is written to the beginning of the file.
 
 ### ♿ Accessibility
-- Приложение включает полную поддержку специальных возможностей:
-- Темы оформления: Light, Dark и High-Contrast (A11Y) для слабовидящих
-- Полное управление с клавиатуры во всех элементах интерфейса
-- ARIA-атрибуты для корректной работы с программами чтения с экрана
-- Однократная настройка - постоянное удобство использования
+The application includes full support for accessibility features:
+- UI themes: Light, Dark, and High-Contrast for visually impaired users
+- Full keyboard navigation in all interface elements
+- ARIA attributes for proper screen reader compatibility
+- One-time setup - permanent convenience of use
 
 ### Tech Stack
 - **Created:** [Tauri](https://github.com/tauri-apps/tauri) + [Leptos](https://github.com/leptos-rs/leptos)
 - **Dependencies:** gtk3, webkit2gtk, libappindicator, libnotify
 - **Tested on OS:** Arch(GNOME, KDE), Ubuntu 25.04 (GNOME, KDE)
+- **Repository: available on Arch AUR:** https://aur.archlinux.org/packages/gucli
 
 
 

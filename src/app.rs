@@ -759,7 +759,7 @@ pub fn Releases(current: String) -> impl IntoView {
     spawn_local(async move {
         let client = reqwest::Client::new();
         if let Ok(response) = client
-            .get("https://api.github.com/repos/jager1win/ksc/releases/latest")
+            .get("https://api.github.com/repos/jager1win/gucli/releases/latest")
             .header("User-Agent", "App/Version")
             .send()
             .await
@@ -781,7 +781,7 @@ pub fn Releases(current: String) -> impl IntoView {
                         Some(latest) => {
                             view! { <span>" - new version " {latest} " available!"</span> }.into_any()
                         }
-                        None => view! { <span>" - failed to check"</span> }.into_any(),
+                        None => view! { <span>" - failed to check new version"</span> }.into_any(),
                     }}
                 </Transition>
             </span>
@@ -801,8 +801,7 @@ pub fn ShellSwitch() -> impl IntoView {
     let (current_index, set_current_index) = signal(0);
 
     let next_shell = {
-        // захватываем shells и set_current_index
-        let shells = shells.clone(); // если хочется ownership в замыкании
+        let shells = shells.clone();
         move |_| {
             set_current_index.update(|idx| *idx = (*idx + 1) % shells.len());
         }

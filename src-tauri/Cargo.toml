@@ -1,5 +1,5 @@
 [package]
-name = "Gucli"
+name = "gucli"
 version = "1.0.0"
 description = "Your personal command center in the system tray"
 authors = ["Yuriy (Jager) Lysov"]
