@@ -60,7 +60,7 @@ The application includes full support for accessibility features:
 - **Created:** [Tauri](https://github.com/tauri-apps/tauri) + [Leptos](https://github.com/leptos-rs/leptos)
 - **Dependencies:** gtk3, webkit2gtk, libappindicator, libnotify
 - **Tested on OS:** Arch(GNOME, KDE), Ubuntu 25.04 (GNOME, KDE)
-- **Repository: available on Arch AUR:** https://aur.archlinux.org/packages/gucli
+- **Repository: available on Arch AUR** https://aur.archlinux.org/packages/gucli
 
 
 
