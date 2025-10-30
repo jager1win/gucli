@@ -301,7 +301,7 @@ pub fn App() -> impl IntoView {
         set_commands.set(buf);
     };
 
-    //+ Обработчик глобальных горячих клавиш
+    //+ Global Keyboard Shortcut Handler
     let handle_global_keydown = move |ev: KeyboardEvent| {
         match &ev.key()[..] {
             "F1" => active_tab.set(0),
