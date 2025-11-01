@@ -54,8 +54,8 @@
         "epoch": 0,
         "files": {},
         "depends": [
-          "libnotify-bin",
-          "ayatana-appindicator3 | libappindicator-gtk3 | kf5-knotifications"
+          "libnotify",
+          "libappindicator-gtk3"
         ]
       }
     }

@@ -12,6 +12,7 @@ use std::process::Stdio;
 use std::thread;
 use std::time::{Duration, Instant};
 use tauri_plugin_opener::OpenerExt;
+use notify_rust::Notification;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserCommand {
@@ -368,22 +369,14 @@ fn execute_command(cmd: UserCommand) -> Result<String, String> {
 }
 
 fn send_notification(summary: &str, body: &str) {
-    if Command::new("notify-send")
-        .arg("--version")
-        .output()
-        .is_ok()
+    if let Err(e) = Notification::new()
+        .summary(summary)
+        .body(body)
+        .appname("gucli-notification")
+        .icon("system")
+        .show()
     {
-        let _ = Command::new("notify-send")
-            .arg(summary)
-            .arg(body)
-            .arg("--app-name=gucli")
-            .arg("--icon=system")
-            .status();
-    } else {
-        error!(
-            "notify-send not found. Notification skipped: {} - {}",
-            summary, body
-        );
+        error!("Notification failed: {} - {}. Error: {}", summary, body, e);
     }
 }
 
