@@ -59,6 +59,7 @@ The application includes full support for accessibility features:
 ### Tech Stack
 - **Created:** [Tauri](https://github.com/tauri-apps/tauri) + [Leptos](https://github.com/leptos-rs/leptos)
 - **Dependencies:** gtk3, webkit2gtk, libappindicator, libnotify
+- **Compatibility:** GNOME* may need "AppIndicator and KStatusNotifierItem Support" extension
 - **Tested on ok on OS:** Arch(GNOME, COSMIC), Debian 13 (GNOME, KDE, Cinnamon, LXQt, Mate*, LXDE*) * = outdated UI
 - **Repository: available on Arch AUR** https://aur.archlinux.org/packages/gucli
 
