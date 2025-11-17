@@ -1,0 +1,47 @@
+name: Sign Release Assets
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v4.0.0
+
+      - name: Download release assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release download ${{ github.ref_name }}
+
+      - name: Sign packages and binary
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Sign packages
+          for file in *.deb *.rpm; do
+            if [ -f "$file" ]; then
+              echo "Signing $file"
+              cosign sign-blob --yes "$file" --bundle "$file.sigstore.json"
+            fi
+          done
+          
+          # Sign binary
+          if [ -f "gucli" ]; then
+            echo "Signing gucli binary"
+            cosign sign-blob --yes "gucli" --bundle "gucli.sigstore.json"
+          fi
+
+      - name: Upload signatures to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload ${{ github.ref_name }} *.sigstore.json

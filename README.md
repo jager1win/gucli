@@ -1,6 +1,10 @@
 ## Gucli - Your personal command center in the system tray
 Gucli (from GUI + CLI) is a system tray menu for Linux that converts user console commands into accessible menu items for one-click or keyboard launch. Execution results are displayed in system notifications by default. The application can be useful for both advanced users and people with disabilities.
 
+<p align="center">
+  <img src="screenshot.png" width="50%" alt="screenshot">
+</p>
+
 ### Application Limitations
 - Execution timeout: 500 ms. For longer operations, add `&` at the end of the command
 - Notification limit: 200 characters. Exceeding this may cause shell freezing
@@ -45,7 +49,7 @@ NOT RECOMMENDED!!! Using long-running commands (like watch) in the program - use
 
 IMPORTANT!!! Always remember the execution time and output limitations, and always test before adding.
 
-Otherwise, it's all individual - systemctl, docker, etc. I recommend moving complex or long sequences to aliases or scripts (bash/zsh/fish) and calling them with short commands, for example `sh my_script.sh --f1`
+Otherwise, it's all individual - systemctl, docker, networkctl, df, free, etc. I recommend moving complex or long sequences to aliases or scripts (bash/zsh/fish) and calling them with short commands, for example `sh my_script.sh --f1`
 
 Execution results are saved in `~/.config/gucli/gucli.log`. The last 100 lines are preserved (log rotation). Timestamp-command-result or application error is written to the beginning of the file.
 
